@@ -1138,7 +1138,7 @@ function run_lazarus(string $project_path): void {
 				break;
 			}
 		}
-		create_default_settings($dir, 'lazarus_settings.json', $settings_macros);
+		create_default_settings($dir, 'settings/lazarus_settings.json', $settings_macros);
 	}
 
 	if ($json = try_to_load_fpc_build($dir)) {		
@@ -1206,7 +1206,7 @@ function run_project(string $file, string $project_path, ?string $build_variant)
 
 	// open dialog to create new .fpcbuild in directory
 	if (!find_fpc_build($project_path)) {
-		create_default_settings($project_path, 'bundle_settings.json', $settings_macros);
+		create_default_settings($project_path, 'settings/bundle_settings.json', $settings_macros);
 	}
 
 	$fpcbuild = try_to_load_fpc_build($project_path);
@@ -1373,7 +1373,7 @@ if ($project_path) {
 // no project, use single file
 if (!$project_path) {
 	$parent = dirname($file);
-	if (!find_fpc_build($parent)) create_default_settings($parent, 'fpc_settings.json', array());
+	if (!find_fpc_build($parent)) create_default_settings($parent, 'settings/fpc_settings.json', array());
 	$fpcbuild = try_to_load_fpc_build($parent, $file);
 	run_single_file($file, $fpcbuild);
 	build_finished(0);
