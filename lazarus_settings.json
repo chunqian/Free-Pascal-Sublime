@@ -1,0 +1,5 @@
+{
+  "project": "$dir/$(project-name).lpi",
+  "mode": "terminal",
+  "binary": "$dir/$(project-name).app/Contents/MacOS/$(project-name)"
+}

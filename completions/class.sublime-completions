@@ -1,0 +1,9 @@
+{
+"scope": "meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.generic.pascal,meta.scope.helper.pascal",
+   "completions":
+   [
+      { "trigger": "pub", "contents": "public\n\t$0" },
+      { "trigger": "priv", "contents": "private\n\t$0" },
+      { "trigger": "pro", "contents": "protected\n\t$0" },
+   ]
+}

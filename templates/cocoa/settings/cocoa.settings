@@ -1,0 +1,8 @@
+
+COMMON:
+
+  Parent = "settings-bundle.todo"
+
+OPTIONS:
+
+  -dFOO

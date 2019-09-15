@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>PascalGladiator</string>
+	<key>settings</key>
+	<array>
+		<dict>
+			<key>settings</key>
+			<dict>
+				<key>background</key>
+				<string>#E5E5E5</string>
+				<key>caret</key>
+				<string>#000000</string>
+				<key>foreground</key>
+				<string>#000000</string>
+				<key>invisibles</key>
+				<string>#BFBFBF</string>
+				<key>lineHighlight</key>
+				<string>#EEF1F5</string>
+				<key>selection</key>
+				<string>#A7CAFF</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Comment</string>
+			<key>scope</key>
+			<string>comment</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#FF0000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Macro</string>
+			<key>scope</key>
+			<string>comment.macro</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>italic</string>
+				<key>foreground</key>
+				<string>#FF0000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Macro value</string>
+			<key>scope</key>
+			<string>comment.macro.value</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#FF8000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Pascal: Comment Todo</string>
+			<key>scope</key>
+			<string>comment.todo.pascal</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>bold underline</string>
+				<key>foreground</key>
+				<string>#FFFF33</string>
+				<key>background</key>
+				<string>#333333</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Pascal: Comment URL</string>
+			<key>scope</key>
+			<string>comment.url.pascal</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>italic</string>
+				<key>foreground</key>
+				<string>#669933</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Pascal: Comment Header</string>
+			<key>scope</key>
+			<string>comment.header.pascal</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>bold</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Pascal: Class section</string>
+			<key>scope</key>
+			<string>comment.section.pascal</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>italic</string>
+				<key>foreground</key>
+				<string>#FF0000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Pascal: Bookmark</string>
+			<key>scope</key>
+			<string>entity.name.type.bookmark.pascal</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>italic</string>
+				<key>foreground</key>
+				<string>#FF0000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Storage types</string>
+			<key>scope</key>
+			<string>storage.type.pascal,storage.type.forward.pascal,storage.type.framework,storage.type.pointer</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#0080FF</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Storage</string>
+			<key>scope</key>
+			<string>storage</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#0000FF</string>
+			</dict>
+		</dict>
+		<!-- ifdef block -->
+		<!-- <dict>
+			<key>name</key>
+			<string>Pascal: Conditional</string>
+			<key>scope</key>
+			<string>meta.scope.conditional.pascal</string>
+			<key>settings</key>
+			<dict>
+				<key>background</key>
+				<string>#0000000D</string>
+			</dict>
+		</dict> -->
+		<dict>
+			<key>name</key>
+			<string>String</string>
+			<key>scope</key>
+			<string>string</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#666666</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Number</string>
+			<key>scope</key>
+			<string>constant.ordinal,constant.numeric</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#0F20F6</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Built-in constant</string>
+			<key>scope</key>
+			<string>constant.language,support.constant</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>bold</string>
+				<key>foreground</key>
+				<string>#FF0000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>User-defined constant</string>
+			<key>scope</key>
+			<string>constant.character,constant.definition</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#008040</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Keyword</string>
+			<key>scope</key>
+			<string>keyword</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#0000FF</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Keyword modifiers</string>
+			<key>scope</key>
+			<string>keyword.modifiers</string>
+			<key>settings</key>
+			<dict>
+				<!-- got sick of this.... -->
+				<!-- <key>fontStyle</key>
+				<string>bold</string> -->
+				<key>foreground</key>
+				<string>#0000FF</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Method name</string>
+			<key>scope</key>
+			<string>storage.method</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#800080</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Library support</string>
+			<key>scope</key>
+			<string>support.class,support.record,support.type</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#6666FF</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Function name</string>
+			<key>scope</key>
+			<string>storage.name.function</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#2E69CF</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>Invalid</string>
+			<key>scope</key>
+			<string>invalid</string>
+			<key>settings</key>
+			<dict>
+				<key>background</key>
+				<string>#800000</string>
+				<key>fontStyle</key>
+				<string>bold</string>
+				<key>foreground</key>
+				<string>#FFFFFF</string>
+			</dict>
+		</dict>
+
+		<!-- //////////////////////////////////////////////////////////////////////// -->
+		<!-- C++ -->
+		<!-- //////////////////////////////////////////////////////////////////////// -->
+		
+		<dict>
+			<key>name</key>
+			<string>Variable (function)</string>
+			<key>scope</key>
+			<string>variable.function.c++</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#0000FF</string>
+			</dict>
+		</dict>
+
+		<!-- <dict>
+			<key>name</key>
+			<string>Methods</string>
+			<key>scope</key>
+			<string>entity.name.function.c++,entity.name.function.constructor.c++</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#800080</string>
+			</dict>
+		</dict> -->
+
+		<dict>
+			<key>name</key>
+			<string>Meta (function)</string>
+			<key>scope</key>
+			<string>keyword.operator.word</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#0000FF</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string>C Operator (*, % etc...)</string>
+			<key>scope</key>
+			<string>keyword.operator.c</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#FF0000</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string>C Comparison (lt,gt)</string>
+			<key>scope</key>
+			<string>keyword.operator.comparison.c</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#000000</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string>Import</string>
+			<key>scope</key>
+			<string>keyword.control.import</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#FF0000</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string></string>
+			<key>scope</key>
+			<string>variable.language.c++</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#0000FF</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string>::</string>
+			<key>scope</key>
+			<string>punctuation.accessor.c++</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#000000</string>
+			</dict>
+		</dict>
+
+		<!-- //////////////////////////////////////////////////////////////////////// -->
+		<!-- PHP -->
+		<!-- //////////////////////////////////////////////////////////////////////// -->
+
+		<!-- <dict>
+			<key>name</key>
+			<string>$Variable</string>
+			<key>scope</key>
+			<string>variable.other.php</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#000000</string>
+			</dict>
+		</dict> -->
+
+		<dict>
+			<key>name</key>
+			<string>Function name</string>
+			<key>scope</key>
+			<string>entity.name.function.php,support.function.magic.php</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#2E69CF</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string>Function name</string>
+			<key>scope</key>
+			<string>entity.name.class.php</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#6666FF</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string>PHP function calls</string>
+			<key>scope</key>
+			<!-- NOTE: support.function is not suffixed with PHP because
+			there are too many variants -->
+			<string>support.function,variable.function.php</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<!-- <string>#746DB0</string> -->
+				<string>#000000</string>
+			</dict>
+		</dict>
+
+		<!-- <dict>
+			<key>name</key>
+			<string>constants</string>
+			<key>scope</key>
+			<string>constant.other.php</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#008040</string>
+			</dict>
+		</dict> -->
+
+		<!-- //////////////////////////////////////////////////////////////////////// -->
+		<!-- PYTHON -->
+		<!-- //////////////////////////////////////////////////////////////////////// -->
+
+		<dict>
+			<key>name</key>
+			<string>Method</string>
+			<key>scope</key>
+			<string>variable.language.python</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>bold</string>
+				<key>foreground</key>
+				<string>#000000</string>
+			</dict>
+		</dict>
+
+		<dict>
+			<key>name</key>
+			<string></string>
+			<key>scope</key>
+			<string>variable.other.constant.python</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string></string>
+				<key>foreground</key>
+				<string>#008040</string>
+			</dict>
+		</dict>
+
+	</array>
+	<key>uuid</key>
+	<string>58A1F073-61BD-41DC-B0A8-E8BE7A096265</string>
+</dict>
+</plist>

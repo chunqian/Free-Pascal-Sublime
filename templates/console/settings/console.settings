@@ -1,0 +1,27 @@
+
+COMMON:
+
+  @Product_Name = "${project-name}"
+  @Company = "my_company"
+  
+  Parent = "base.settings"
+  Main = "$project/Sources/${project-name}.pas"
+  Product_Name = "$product_name"
+
+  Target = "Console"
+  Configuration = "Debug"
+
+OPTIONS (debug):
+
+  -k"-rpath @loader_path/Frameworks"
+
+SOURCE PATHS:
+
+  $project/Sources
+
+FRAMEWORK PATHS:
+
+  /Library/Frameworks
+
+INCLUDE PATHS:
+

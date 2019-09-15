@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 
+		NOTE: this is used for objc exteranl classes which need to expose their methods differently
+		because there is no implementation available 
+	-->
+	<key>name</key>
+	<string>Symbol List: Method (External)</string>
+	<key>scope</key>
+	<string>meta.method.external.declared.pascal storage.method.pascal</string>
+	<key>settings</key>
+	<dict>
+		<key>showInSymbolList</key>
+		<integer>1</integer>
+		<key>showInIndexedSymbolList</key>
+		<integer>1</integer>
+		<!-- 
+			NOTE: showInSymbolList conflicts with showInIndexedSymbolList so we don't get the symbolTransformation results/
+			if we remove the 2nd scope name (storage.method.pascal) the symbolTransformation will be used but then it
+			will conflict with the showInIndexedSymbolList name. 
+		-->
+		<key>symbolTransformation</key>
+		<string>
+		s/^\s*\b(?i:(class)*)\b\s*\b(?i:(function|procedure|constructor|destructor)+)\b\s+(\w+)/EXTERNAL: $3/;
+		</string>
+	</dict>
+	<key>uuid</key>
+	<string>88AE2259-6C7D-453C-A152-64AB67E6FBDA</string>
+</dict>
+</plist>

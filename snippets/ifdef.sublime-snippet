@@ -1,0 +1,10 @@
+<snippet>
+    <content><![CDATA[
+{\$ifdef ${1}}
+$SELECTION$0
+{\$endif}
+]]></content>
+	<description>ifdef .. endif</description>
+    <tabTrigger>ifdef</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+type
+	T${1:ClassName} = class (${2:TObject})
+		$0
+	end;
+]]></content>
+	<description>class … end</description>
+    <tabTrigger>class</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

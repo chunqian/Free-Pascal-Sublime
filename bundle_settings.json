@@ -1,0 +1,119 @@
+{
+  "configuration": "debug",
+  "target": "bundle",
+
+  /**
+   * Configurations
+   *
+   * Settings from the current configuration override settings from the target
+   * Options, paths and other lists are appending to the target unless prefixed
+   * with "*" in which case they are excluded.
+   **/
+
+  "configurations": {
+    "debug": {
+      "options": [
+        "-godwarfcpp",
+        "-gw"
+      ]
+    },
+    "release": {
+      "options": [
+        "-Xs",
+        "-gw"
+      ]
+    }
+  },
+
+  /**
+   * Targets
+   **/
+
+  "targets": {
+
+    /**
+     * Target - Base
+     * 
+     * All other targets must descend from base
+     **/
+
+    "base": {
+      "main": "$project/test.pas",
+      "product_name": "$product_name",
+      "product_path": "$project/$product_name",
+      "compiler": {
+        "version": "3.3.1",
+        "architecture": "ppcx64",
+        "minimum_system_version": "10.10",
+        "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+      },
+      "macros": {
+        "product_name": "MyApp",
+        "company": "my_company"
+      },
+      "options": [
+        "-vbr"
+      ],
+      "source_paths": [
+        "$project"
+      ],
+      "framework_paths": [
+      ],
+      "library_paths": [
+      ],  
+      "include_paths": [
+      ]
+    },
+
+    /**
+     * Target - Console
+     **/
+
+    "console": {
+      "parent": "base",
+      "options": [
+      ]
+    },
+
+    /**
+     * Target - Library
+     **/
+
+    "library": {
+      "parent": "base",
+      "main": "$project/Library.pas",
+      "product_name": "lib$product_name.a",
+      "options": [
+        "-Cn"
+      ],
+      "object_files": [
+        "$output/Library.o"
+      ]
+    },
+
+    /**
+     * Target - Bundle
+     **/
+
+    "bundle": {
+      "parent": "base",
+      "bundle": "$project/$product_name.app",
+      "info.plist": "$project/Info.plist",
+      "codesign_entitlements": "$project/$product_name.entitlements",
+      "codesign_identity": "3rd Party Mac Developer Application",
+      "codesign_enabled": false,
+      "options": [
+        "-k\"-rpath @loader_path/Frameworks\""
+      ],
+      "macros": {
+        "CFBundleName": "$product_name",
+        "CFBundleDisplayName": "$product_name",
+        "CFBundleDevelopmentRegion": "English",
+        "CFBundleIdentifier": "com.$company.$product_name",
+        "CFBundleExecutable": "$product_name",
+        "CFBundleIconFile": ""
+      }
+    }
+  }
+
+}

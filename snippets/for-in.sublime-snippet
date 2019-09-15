@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+for ${1} in ${2} do
+	begin
+		$0
+	end;
+]]></content>
+	<description>for … in</description>
+    <tabTrigger>forin</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

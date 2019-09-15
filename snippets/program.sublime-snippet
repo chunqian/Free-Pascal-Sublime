@@ -1,0 +1,14 @@
+<snippet>
+    <content><![CDATA[
+{\$mode objfpc}
+
+program ${1:unit_name};
+
+begin
+$0
+end.
+]]></content>
+	<description>program .. end.</description>
+    <tabTrigger>prog</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

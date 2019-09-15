@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+constructor ${1:Create};
+]]></content>
+	<description>constructor</description>
+    <tabTrigger>cons</tabTrigger>
+    <scope>meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.generic.pascal</scope> 
+</snippet>

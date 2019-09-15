@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+type
+	generic T${1:GenericName}<${2:T}> = ${3:class} (${4:TObject})
+		$0
+	end;
+]]></content>
+	<description>generic</description>
+    <tabTrigger>gen</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

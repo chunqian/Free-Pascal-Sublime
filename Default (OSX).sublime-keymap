@@ -1,0 +1,20 @@
+[
+	{ "keys": ["super+r"], 
+		"command": "build", 
+		"args": { "variant": "" }, 
+		"context": [ { "key": "selector", "operator": "equal", "operand": "source" } ] 
+	},
+	{ "keys": ["super+shift+r"], 
+		"command": "build", 
+		"args": { "variant": "Debug" }, 
+		"context": [ { "key": "selector", "operator": "equal", "operand": "source" } ] 
+	},
+	{ "keys": ["super+shift+h"], 
+		"command": "dash_doc",
+		"context": [ { "key": "selector", "operator": "equal", "operand": "source" } ] 
+	},
+	{ "keys": ["super+shift+h"], 
+		"command": "laz_doc",
+		"context": [ { "key": "selector", "operator": "equal", "operand": "source.pascal" } ] 
+	},
+]

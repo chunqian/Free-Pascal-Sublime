@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+class operator Initialize(var rec: $0);
+]]></content>
+	<description>Initialize Operator</description>
+    <tabTrigger>init</tabTrigger>
+    <scope>meta.scope.record.pascal,meta.scope.generic.pascal</scope> 
+</snippet>

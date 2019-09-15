@@ -1,0 +1,12 @@
+<snippet>
+    <content><![CDATA[
+function ${1:MyFunction}: ${2:boolean};
+begin
+	$0
+end;
+]]></content>
+	<description>function (body)</description>
+    <tabTrigger>func</tabTrigger>
+    <!-- note: we need source.pascal for include files -->
+    <scope>source.pascal,meta.scope.implementation.pascal</scope> 
+</snippet>

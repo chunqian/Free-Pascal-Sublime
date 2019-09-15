@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>string.warning.pascal</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^(/.*):([0-9]+): (warning|error|note|fatal)+: ([0-9]+): (.*)$</string>
+			<key>name</key>
+			<string>meta.error.conosle.pascal</string>
+		</dict>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.finish-message</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^\[(.*)\]$</string>
+			<key>name</key>
+			<string>meta.message.conosle.pascal</string>
+		</dict>
+	</array>
+	<key>name</key>
+	<string>FPC Console</string>
+	<key>uuid</key>
+	<string>39F338E1-C2A5-41F4-8DE4-949ECD7A87C3</string>
+</dict>
+</plist>

@@ -1,0 +1,30 @@
+{
+	"cmd": ["php", "$packages/FPC/build.php", "$file", "$project_path"],
+	"file_regex": "^(.*):([0-9]+): (?:error|fatal)+: ([0-9]+): (.*)$",
+	"working_dir": "${file_path}",
+	"selector": "source.pascal",
+	"syntax": "fpc_console.tmLanguage",
+	"target": "fpc_exec",
+	"variants": [
+	  { 
+	  	"name": "Debug",
+	    "cmd": ["php", "$packages/FPC/build.php", "$file", "$project_path", "debug"],
+	  },
+	  {
+	  	"name": "Lazarus",
+	    "cmd": ["php", "$packages/FPC/build.php", "$file", "$project_path", "lazarus"],
+	  	//"cmd": ["sh", "${project_path}/build.bash", "$file", "$project_path", "$folder", "lazarus"],
+	  	//"file_regex": "^(.*)\\((\\d+),(\\d+)\\) [a-zA-Z]+: \\(\\d+\\) (.*)",
+	  },
+	  { 
+	  	"name": "PasScript",
+	  	// -g = debug
+	  	// -t = run in terminal
+	    "shell_cmd": "pps $file -t -g -v=\"latest\" -a=\"ppcx64\" ",
+	  },
+	  { 
+	  	"name": "VSCode",
+	    "cmd": ["php", "$packages/FPC/build.php", "$file", "$project_path", "vscode"],
+	  },
+	 ]
+}
