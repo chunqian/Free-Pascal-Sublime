@@ -13,8 +13,6 @@
 	  {
 	  	"name": "Lazarus",
 	    "cmd": ["php", "$packages/FPC/build.php", "$file", "$project_path", "lazarus"],
-	  	//"cmd": ["sh", "${project_path}/build.bash", "$file", "$project_path", "$folder", "lazarus"],
-	  	//"file_regex": "^(.*)\\((\\d+),(\\d+)\\) [a-zA-Z]+: \\(\\d+\\) (.*)",
 	  },
 	  { 
 	  	"name": "PasScript",

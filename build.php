@@ -1089,7 +1089,7 @@ function run_single_file(string $file, array $fpcbuild = null) {
 
 	// TODO: move this into default_fpc_options so we have access to the array first
 	if ($fpcbuild) $options = merge_fpc_build_options($options, $macros, $fpcbuild);
-
+	
 	$command = "$fpc $options \"$file\"";
 
 	// run command

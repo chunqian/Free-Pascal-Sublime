@@ -1,19 +1,49 @@
-[  
-    // {  
-    //     "id": "find",  
-    //     "children":  
-    //     [  
-    //         { "caption": "-" },
-    //         { "caption": "Find All Occurences...", "command": "find_all_occurences" }  
-    //     ]  
-    // },
-    // {  
-    //     "id": "tools",  
-    //     "children":  
-    //     [  
-    //     		{ "caption": "-" },
-    //         { "command": "toggle_break_point" },
-    //         { "command": "remove_all_break_points" }  
-    //     ]  
-    // }
+// [  
+//     {  
+//         "id": "find",  
+//         "children":  
+//         [  
+//             { "caption": "-" },
+//             { "caption": "Find All Occurences...", "command": "find_all_occurences" }  
+//         ]  
+//     },
+//     {  
+//         "id": "tools",  
+//         "children":  
+//         [  
+//         		{ "caption": "-" },
+//             { "command": "toggle_break_point" },
+//             { "command": "remove_all_break_points" }  
+//         ]  
+//     }
+// ]
+
+[
+  {
+    "id": "preferences",
+    "children":
+    [
+      {
+        "caption": "Package Settings",
+        "mnemomic": "P",
+        "id": "package-settings",
+        "children":
+        [
+          {
+            "caption": "FPC",
+            "children":
+            [
+              {
+                "command": "open_file", "args":
+                {
+                  "file": "${packages}/FPC/FPC.sublime-settings"
+                },
+                "caption": "Settings - Default"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 ]
