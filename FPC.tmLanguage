@@ -2,13 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>fileTypes</key>
-	<array>
-		<string>pas</string>
-		<string>p</string>
-		<string>inc</string>
-		<string>pp</string>
-	</array>
 	<!-- note: code folding is not customizable in ST! indent only... -->
 	<!--
 	<key>foldingStartMarker</key>
@@ -16,6 +9,11 @@
 	<key>foldingStopMarker</key>
 	<string>\b(?i:(end))\b|\*\)</string>
 	-->
+
+	<!-- /////////////////////////////////////////// -->
+	<!-- PATTERNS -->
+	<!-- /////////////////////////////////////////// -->
+
 	<key>patterns</key>
 	<array>
 		<!-- line comment -->
@@ -1009,7 +1007,7 @@
 			<key>comment</key>
 			<string>Common keywords</string>
 			<key>match</key>
-			<string>\b(?i:(fixed|constructor|destructor|property|function|procedure|class|object|shl|shr|strict|bitpacked|continue|is|as|break|read|implements|library|real|ansistring|widestring|unicodestring|ansichar|widechar|unicodechar|single|double|pchar|self|try|finally|except|on|exception|exports|dispose|result|univ|exit|halt|blockzero|char|pointer|new|sizeof|forward|uses|const|constref|cycle|var|threadvar|class|object|record|type|implementation|interface|begin|end|integer|boolean|bytebool|wordbool||longbool|longint|byte|shortint|smallint|word|cardinal|longword|int64|qword|variant|and|array|case|div|do|downto|else|file|for|goto|if|in|inherited|label|leave|mod|not|of|or|xor|otherwise|packed|program|public|private|protected|published|repeat|raise|set|string|then|to|until|unit|while|with|absolute|sealed|generic|specialize|out|reference|nested|initialization|finalization))\b</string>
+			<string>\b(?i:(fixed|constructor|destructor|property|function|procedure|class|object|shl|shr|strict|bitpacked|continue|is|as|break|read|implements|library|real|ansistring|widestring|unicodestring|ansichar|widechar|unicodechar|single|double|pchar|try|finally|except|on|exception|exports|dispose|univ|exit|halt|char|pointer|new|sizeof|forward|uses|const|constref|cycle|var|threadvar|class|object|record|type|implementation|interface|begin|end|integer|boolean|bytebool|wordbool||longbool|longint|byte|shortint|smallint|word|cardinal|longword|int64|qword|variant|and|array|case|div|do|downto|else|file|for|goto|if|in|inherited|label|leave|mod|not|of|or|xor|otherwise|packed|program|public|private|protected|published|repeat|raise|set|string|then|to|until|unit|while|with|absolute|sealed|generic|specialize|out|reference|nested|initialization|finalization))\b</string>
 			<key>name</key>
 			<string>keyword.control.pascal</string>
 		</dict>
@@ -1195,6 +1193,13 @@
 
 	<key>repository</key>
 	<dict>
+		<key>begin_scope_keywords</key>
+		<dict>
+			<key>match</key>
+			<string>\b(?i:(result|self))\b</string>
+			<key>name</key>
+			<string>keyword.control.pascal</string>
+		</dict>
 		<key>nested_php_block</key>
 		<dict>
 			<key>begin</key>
@@ -1258,6 +1263,10 @@
 				<dict>
 					<key>include</key>
 					<string>#begin_end_block</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#begin_scope_keywords</string>
 				</dict>
 				<dict>
 					<key>include</key>
@@ -1715,6 +1724,18 @@
 			</array>
 		</dict>
 	</dict>
+
+	<!-- /////////////////////////////////////////// -->
+	<!-- FILE INFO -->
+	<!-- /////////////////////////////////////////// -->
+
+	<key>fileTypes</key>
+	<array>
+		<string>pas</string>
+		<string>p</string>
+		<string>inc</string>
+		<string>pp</string>
+	</array>
 	<key>name</key>
 	<string>FPC</string>
 	<key>scopeName</key>

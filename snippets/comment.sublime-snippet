@@ -1,8 +1,10 @@
 <snippet>
     <content><![CDATA[
-{ $0 }
+(*
+  $0
+*)
 ]]></content>
-	<description>comment { ... }</description>
-    <tabTrigger>comment</tabTrigger>
+	<description>comment (* ... *)</description>
+    <tabTrigger>*</tabTrigger>
     <scope>source.pascal</scope> 
 </snippet>

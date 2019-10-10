@@ -1,6 +1,6 @@
 {
   "configuration": "debug",
-  "target": "bundle",
+  "target": "???",
 
   /**
    * Configurations
@@ -38,7 +38,7 @@
      **/
 
     "base": {
-      "main": "$project/test.pas",
+      "main": "$project/$(program-file).pas",
       "product_name": "$product_name",
       "product_path": "$project/$product_name",
       "compiler": {
@@ -48,7 +48,7 @@
         "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
       },
       "macros": {
-        "product_name": "MyApp",
+        "product_name": "$(program-file)",
         "company": "my_company"
       },
       "options": [
@@ -100,7 +100,7 @@
       "bundle": "$project/$product_name.app",
       "info.plist": "$project/Info.plist",
       "codesign_entitlements": "$project/$product_name.entitlements",
-      "codesign_identity": "3rd Party Mac Developer Application",
+      "codesign_identity": "Developer ID Application",
       "codesign_enabled": false,
       "options": [
         "-k\"-rpath @loader_path/Frameworks\""

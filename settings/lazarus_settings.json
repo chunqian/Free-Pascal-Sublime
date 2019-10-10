@@ -1,5 +1,9 @@
 {
   "project": "$dir/$(project-name).lpi",
   "mode": "terminal",
-  "binary": "$dir/$(project-name).app/Contents/MacOS/$(project-name)"
+  "binary": "$dir/$(project-name).app/Contents/MacOS/$(project-name)",
+  "options": [
+    "--cpu=x86_64",
+    "--widgetset=cocoa"
+  ]
 }

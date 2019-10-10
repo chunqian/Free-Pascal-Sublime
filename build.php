@@ -197,9 +197,11 @@ function fatal(string $error, bool $show_error = true): void {
 	global $argv;
 	print("FATAL: $error\n");
 	// show an error which we can see in the current file
-	if ($show_error) show_error($argv[1], $error, false);
-	$e = new Exception;
-	var_dump($e->getTraceAsString());
+	if ($argv[1]) {
+		if ($show_error) show_error($argv[1], $error, false);
+		$e = new Exception;
+		var_dump($e->getTraceAsString());
+	}
 	exit(-1);
 }
 
@@ -276,9 +278,11 @@ function load_settings (array $fpcbuild): array {
 	$config = $fpcbuild['configurations'][$fpcbuild['configuration']];
 	if (!$config) fatal("configuration '".$fpcbuild['configuration']."' not found.");
 
-	// if (!$config['target']) fatal('configuration must specifiy target.');
+	// if (!$config['target']) fatal('configuration must specifiy a valid target.');
+
 	// get the current target
 	$target = $fpcbuild['targets'][$fpcbuild['target']];
+	if (!$target) fatal('target "'.$fpcbuild['target'].'" doesn\'t exist.');
 
 	// build ordered list of targets
 	$order = array($fpcbuild['target']);
@@ -348,7 +352,7 @@ function get_setting(string $category, string $name = "", bool $is_path = false,
 	if (($is_path == SETTING_IS_PATH) && ($required) && (!file_exists($value))) fatal("Setting path '$value' for key '$name' doesn't exist.");
 	if ($value == "") {
 		if ($required) {
-			fatal("Setting '$category/$name' is invalid");
+			fatal("Setting '$category/$name' is missing");
 		} else {
 			return null;
 		}
@@ -680,7 +684,6 @@ function find_fpc_build(string $project): ?string {
 	// search paths
 	$paths = array(
 		"$project/.fpcbuild",
-		"$project/Settings/.fpcbuild",
 	);
 	foreach ($paths as $path) {
 		if (file_exists($path)) {
@@ -689,35 +692,6 @@ function find_fpc_build(string $project): ?string {
 	}
 	return null;
 }
-
-
-function load_fpc_build($project, $errors = true) {
-	// search paths
-	$paths = array(
-		"$project/.fpcbuild",
-		"$project/Settings/.fpcbuild",
-	);
-	foreach ($paths as $path) {
-		if (file_exists($path)) {
-			$contents = file_get_contents($path);
-			$contents = json_clean($contents);
-
-			// replace macros
-			$contents = str_replace('$dir', dirname($path), $contents);
-
-			$json = json_decode($contents, true);
-			if ($json == null) fatal("failed to decode json file (".json_last_error_msg().") '$path'.\n");
-			$json['FPCBUILD_PATH'] = $path;
-			return $json;
-		}
-	}
-	if ($errors) {
-		fatal(".fpcbuild not found. available paths: \n".implode("\n", $paths));
-	} else {
-		return null;
-	}
-}
-
 
 function run_command(string $command, bool $redirect_stdout = true): int {
 	//passthru($command, $exit_code);
@@ -799,9 +773,44 @@ function default_fpc_options(): string {
 	$options = array( "-vbr",
 									  "-gw",
 									  "-godwarfcpp",
-									  "-Fl/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib",
+									  "-XR".find_sdk_path()
 										);
 	return " ".implode(" ", $options);
+}
+
+function find_sdk_path(): string {
+	$file = sys_get_temp_dir().'/system_sdk_path.txt';
+	if (!file_exists($file)) {
+		$sdk_path = exec('xcrun --show-sdk-path');
+		file_put_contents($file, $sdk_path);
+		return $sdk_path;
+	}
+	return file_get_contents($file);
+}
+
+function find_fpc_version(bool $latest): string {
+	if ($latest) {
+		$files = scandir('/usr/local/lib/fpc');
+		$compilers = array();
+		foreach ($files as $file) {
+			if (preg_match('/\d+\.\d+\.\d+/', $file)) {
+				$compilers[] = $file;
+			}
+		}
+		rsort($compilers);
+		return $compilers[0];
+	} else {
+		if (!$_ENV['FPC_STABLE_VERSION']) fatal("FPC_STABLE_VERSION must be set in shell profile.\n");
+		return $_ENV['FPC_STABLE_VERSION'];
+	}
+}
+
+function fpc_latest(bool $trunk = false): string {
+	if ($trunk) {
+		return '3.3.1';
+	} else {
+		return '3.0.4';
+	}
 }
 
 function fpc($program, $version = "3.3.1", $arch = "ppcx64", $options = "") {
@@ -942,81 +951,46 @@ function parse_run_script($file) {
 	return false;
 }
 
-function try_to_load_fpc_build(string $project_path, string $file = null, bool $no_program = false): ?array {
-	// all search paths in order of precedence
-	$dirs = array(
-		$project_path,		// project directory
+
+function load_fpc_build(string $path): ?array {
+	if (file_exists($path)) {
+		$contents = file_get_contents($path);
+		$contents = json_clean($contents);
+
+		// replace macros
+		$contents = str_replace('$dir', dirname($path), $contents);
+
+		$json = json_decode($contents, true);
+		if ($json == null) fatal("failed to decode json file (".json_last_error_msg().") '$path'.\n");
+
+		// if we're loading from a sublime project then extract correct value
+		if (file_ext($path) == "sublime-project") {
+			$json = $json['settings']['fpcbuild'];
+			// if ($json == null) fatal("failed to decode json file (".json_last_error_msg().") '$path'.\n");
+		}
+
+		// add built-in values
+		if ($json) {
+			$json['FPCBUILD_PATH'] = $path;
+		}
+
+		return $json;
+	} else {
+		return null;
+	}
+}
+
+function try_to_load_fpc_build(?string $project_file, string $project_path, string $file = null, bool $no_program = false): ?array {
+	
+	// build list of paths to search for settings
+	$paths = array(
+		"$project_path/.fpcbuild",
 	);
-	if ($file) array_push($dirs, $file);
+	if ($project_file) array_push($paths, $project_file);
+	if ($file) array_push($paths, $file);
 
-	foreach ($dirs as $dir) {
-		if ($json = load_fpc_build($dir, false)) {
-			// TODO: determine precedence between 'build_script' and 'program'
-
-			// output
-			if ($json['output']) {
-				// make build dir
-				$output = $json['output'];
-				// $output = str_replace("\$dir", $dir, $output);
-				if (!file_exists($output)) mkdir($output);
-				// clean output before building
-				if ($json['clean'] && file_exists($output)) {
-					foreach (scandir($output) as $file) {
-						if (in_array(file_ext($file), array('o','ppu'))) {
-							unlink("$output/$file");
-						}
-					}
-				}
-			}
-
-			// program key
-			if ($json['program'] && !$no_program) {
-				$path = $json['program'];
-				// $path = str_replace("\$dir", $dir, $path);
-				// TODO: how can we unify all these macros, total mess right now....
-				$path = str_replace('$file', $file, $path);
-				if (file_exists($path)) {
-					$GLOBALS["argv"][1] = $path;
-					print("using program file '$path'\n");
-					chdir(dirname($path));
-					if (parse_run_script($path)) {
-						build_finished();
-					} else {
-						// attempt to load .fpcbuild in the same directory as the program
-						if ($json['program-build']) {
-							$program_dir = dirname($path);
-							// print("attempt to load .fpcbuild in '$program_dir' '$path' \n");
-							return try_to_load_fpc_build($program_dir, $path, true);
-						} else {
-							run_single_file($path, $json);
-							build_finished(0);
-						}
-					}
-				} else {
-					show_error($json['FPCBUILD_PATH'], "program path '$path' is not found");
-				}
-			}
-
-			// build_script key
-			if ($json['build_script']) {
-				// declare dynamic variables using $args
-				if ($json['args']) {
-					foreach ($json['args'] as $key => $value) {
-						${"$key"} = $value;
-					}
-				}
-				// show_error($file,"run build script at ".$json['build_script']);
-				// declare globals which are available in eval()
-				$program = $GLOBALS["argv"][1];
-				$info = pathinfo($program);
-				$exec_name = $info["filename"];
-				$executable = $info["dirname"]."/".$info["filename"];
-				$dir = $GLOBALS["argv"][2];
-				// fallback to cwd for single files
-				if ($dir == "") $dir = getcwd();
-				require($json['build_script']);
-				build_finished();
-			}
+	foreach ($paths as $path) {
+		if ($json = load_fpc_build($path)) {
 			return $json;
 		}
 	}
@@ -1050,7 +1024,7 @@ function merge_fpc_build_options(string $options, array $macros, array $fpcbuild
 	return $options;
 }
 
-function create_default_settings(string $parent, string $template, array $macros): void {
+function create_default_settings(string $parent, string $template, array $macros): bool {
 	// open dialog to create new .fpcbuild in directory
 	if (ask_dialog("Create new template at $parent/.fpcbuild?", array('No','Yes')) == 'Yes') {
 		$contents = file_get_contents(__DIR__.'/'.$template);
@@ -1061,7 +1035,35 @@ function create_default_settings(string $parent, string $template, array $macros
 		$dest = "$parent/.fpcbuild";
 		file_put_contents($dest, $contents);
 		// exec("open $dest");
+		return true;
+	} else {
+		return false;
 	}
+}
+
+function create_project_settings(string $project_file, string $template, array $macros): void {
+	print("creating new fpcbuild settings in project '$project_file'.\n");
+	
+	// load settings template
+	$contents = file_get_contents(__DIR__.'/'.$template);
+	$contents = json_clean($contents);
+	// replace settings macros
+	foreach ($macros as $key => $value) {
+		$contents = preg_replace('/\$\(('.$key.')\)/', $macros[$key], $contents);
+	}
+	$template = json_decode($contents, true);
+
+	// load sublime-project json
+	$contents = file_get_contents($project_file);
+	$data = json_decode($contents, true);
+	$data["settings"]["fpcbuild"] = $template;
+
+	$contents = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	file_put_contents($project_file, $contents);
+	// if (!create_default_settings($project, 'settings/bundle_settings.json', $macros)) {
+	// 	print("there are no build settings available for project\n");
+	// 	exit;
+	// }
 }
 
 function run_single_file(string $file, array $fpcbuild = null) {
@@ -1075,15 +1077,21 @@ function run_single_file(string $file, array $fpcbuild = null) {
 	} else {
 		$macros = array();
 	}
+
 	$macros['$dir'] = dirname($fpcbuild['FPCBUILD_PATH']);
+	$macros['$fpc_latest'] = fpc_latest();
 
 	// default single file behavior
-	if ($fpcbuild['fpc']) {
-		$fpc = resolve_fpc_build_macro($macros, $fpcbuild['fpc']);
+	if ($fpcbuild['compiler']) {
+		$fpc = resolve_fpc_build_macro($macros, $fpcbuild['compiler']);
 	} else {
-		$version = "3.3.1";
+		$version = fpc_latest();
 		$arch = "ppcx64";
 		$fpc = "/usr/local/lib/fpc/$version/$arch";
+	}
+	if (!file_exists($fpc)) {
+		print("compiler '$fpc' doesn''t exist, reverting to default.\n");
+		$fpc = "/usr/local/bin/fpc";
 	}
 	$options = default_fpc_options();
 
@@ -1113,7 +1121,7 @@ function run_single_file(string $file, array $fpcbuild = null) {
 	}
 }
 
-function run_lazarus(string $project_path): void {
+function run_lazarus(string $project_path, ?string $project_file): void {
 
 	// use cwd if project doesn't exist
 	if (file_exists($project_path)) {
@@ -1122,29 +1130,58 @@ function run_lazarus(string $project_path): void {
 		$dir = getcwd();
 	}
 
-	// note: assume 64 bit on macOS!
-	$options = "--cpu=x86_64";
+	$settings_macros = array(
+		'project-name' => basename($dir),
+		'project-path' => dirname($dir)
+	);
 
-	// create a default .fpcbuild for lazarus
-	if (!find_fpc_build($dir)) {
-		$settings_macros = array(
-			'project-name' => basename($dir),
-			'project-path' => dirname($dir)
-		);
-		$files = scandir($dir);
-		foreach ($files as $file) {
-			if (file_ext($file) == 'lpi') {
-				$settings_macros['project-name'] = basename_no_ext($file);
-				break;
-			}
+	if (file_exists($project_file)) {
+		$json = try_to_load_fpc_build($project_file, $dir);
+		if (!$json) {
+			create_project_settings($project_file, 'settings/lazarus_settings.json', $settings_macros);
+			$json = try_to_load_fpc_build($project_file, $dir);
 		}
-		create_default_settings($dir, 'settings/lazarus_settings.json', $settings_macros);
+	} else {
+		// create a default .fpcbuild for lazarus
+		if (!find_fpc_build($dir)) {
+			$files = scandir($dir);
+			foreach ($files as $file) {
+				if (file_ext($file) == 'lpi') {
+					$settings_macros['project-name'] = basename_no_ext($file);
+					break;
+				}
+			}
+			create_default_settings($dir, 'settings/lazarus_settings.json', $settings_macros);
+		}
+		$json = try_to_load_fpc_build(null, $dir);
 	}
 
-	if ($json = try_to_load_fpc_build($dir)) {		
+
+	if ($json) {		
 
 		// $json['project'] = str_replace("\$dir", $dir, $json['project']);
 		// $json['binary'] = str_replace("\$dir", $dir, $json['binary']);
+
+		if ($json['options']) {
+			$options = implode(" ", $json['options']);
+		} else {
+			$options = "";
+		}
+
+		// TODO: should we keep supporting "output" for lazarus?
+		if ($json['output']) {
+			// make build dir
+			$output = $json['output'];
+			if (!file_exists($output)) mkdir($output);
+			// clean output before building
+			if ($json['clean'] && file_exists($output)) {
+				foreach (scandir($output) as $file) {
+					if (in_array(file_ext($file), array('o','ppu'))) {
+						unlink("$output/$file");
+					}
+				}
+			}
+		}
 
 		if (lazbuild($json['project'], $options) == 0) {
 			if ($json['mode'] == "terminal") {
@@ -1169,19 +1206,41 @@ function run_lazarus(string $project_path): void {
 	}
 }
 
-function run_project(string $file, string $project_path, ?string $build_variant): void {
+function run_build_script(string $file, string $project_file, array $fpcbuild) {
+
+	// change directory to the current file
+	$dir = dirname($project_file);
+	chdir($dir);
+
+	// declare dynamic variables using $args
+	if ($fpcbuild['args']) {
+		foreach ($fpcbuild['args'] as $key => $value) {
+			${"$key"} = $value;
+		}
+	}
+
+	// if there was no $program argument specific then use the current file
+	if (!$program) $program = $file;
+
+	// show_error($file,"run build script at ".$fpcbuild['build_script']);
+
+	// declare globals which are available in eval()
+	$info = pathinfo($program);
+	$exec_name = $info["filename"];
+	$executable = $info["dirname"]."/".$info["filename"];
+
+	$build_script = $fpcbuild['build_script'];
+	print("running build script ".getcwd()."/$build_script\n");
+
+	require($build_script);
+	build_finished();
+}
+
+function run_project(string $file, string $project_file, ?array $fpcbuild, ?string $build_variant): void {
 	global $macros;
 	global $settings;
 
-	// get project from build system or assume directory of input file
-	if ($project_path) {
-		$project = $project_path;
-	} else {
-		$project = dirname($file);
-	}
-
-	// TODO: $debug is just $build_variant now so kill this
-	if ($build_variant) $debug = $build_variant;
+	$project = dirname($project_file);
 
 	require_file($project, "Missing project '$project'");
 	print("Load project '$project'\n");
@@ -1201,26 +1260,52 @@ function run_project(string $file, string $project_path, ?string $build_variant)
 
 	// macros which are replaced in new settings file
 	$settings_macros = array(
-		'program-file' => basename($file)
+		'program-file' => basename_no_ext($file)
 	);
 
-	// open dialog to create new .fpcbuild in directory
-	if (!find_fpc_build($project_path)) {
-		create_default_settings($project_path, 'settings/bundle_settings.json', $settings_macros);
+	// load fpc build if it wasn't provided
+	if (!$fpcbuild) $fpcbuild = load_fpc_build($project_file);
+
+	if (!$fpcbuild) {
+		create_project_settings($project_file, 'settings/bundle_settings.json', $settings_macros);
+		$fpcbuild = load_fpc_build($project_file);
+
+		/*
+		print("creating new fpcbuild settings in project '$project_file'.\n");
+		// load settings template
+		$contents = file_get_contents(__DIR__.'/settings/bundle_settings.json');
+		$contents = json_clean($contents);
+		// replace settings macros
+		foreach ($settings_macros as $key => $value) {
+			$contents = preg_replace('/\$\(('.$key.')\)/', $settings_macros[$key], $contents);
+		}
+		$template = json_decode($contents, true);
+
+		// load sublime-project json
+		$contents = file_get_contents($project_file);
+		$data = json_decode($contents, true);
+		$data["settings"]["fpcbuild"] = $template;
+
+		$contents = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+		file_put_contents($project_file, $contents);
+		// if (!create_default_settings($project, 'settings/bundle_settings.json', $settings_macros)) {
+		// 	print("there are no build settings available for project\n");
+		// 	exit;
+		// }
+		*/
 	}
 
-	$fpcbuild = try_to_load_fpc_build($project_path);
 	$settings = load_settings($fpcbuild);
 	// print_r($settings);
 	$macros = array_merge($macros, $settings["macros"]);
 
 	// common
+	$target_name = get_setting(SETTING_COMMON, SETTING_COMMON_TARGET);
 	$product_name = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_NAME);
 	$product_path = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_PATH);
-	$target_name = get_setting(SETTING_COMMON, SETTING_COMMON_TARGET);
 	$target_config = $fpcbuild['configuration'];
 	$main = get_setting(SETTING_COMMON, SETTING_COMMON_MAIN, true);
-	$bundle = get_setting(SETTING_COMMON, SETTING_COMMON_BUNDLE, true);
+	$bundle = get_setting(SETTING_COMMON, SETTING_COMMON_BUNDLE, true, false);
 
 	// add extra macros from settings
 	if ($main) $macros['$main'] = $main;
@@ -1258,6 +1343,7 @@ function run_project(string $file, string $project_path, ?string $build_variant)
 
 	// add additional options from settings
 	if ($min_system_version = get_setting(SETTING_COMPILER, 'minimum_system_version')) {
+		// -k"-macosx_version_min $min_system_version"
 		$options[] = "-WM$min_system_version";
 	}
 
@@ -1302,14 +1388,17 @@ command;
 			rmovedir($dsym, $dest);
 		}
 
-		// make the acctual bundle if the target is of type 'bundle'
+		// make the actual bundle if the target is of type 'bundle'
 		if ($target_name == 'bundle') {
 			$binary = make_bundle($binary, $bundle, $resource_paths);
 		}
 
 		// run the executable
 		if ($run_after_build) {
-			if ($debug == "debug") {
+
+			// TODO: add env common setting to $binary string
+
+			if ($build_variant == "debug") {
 				prepare_debug_settings($project, array("r"));
 				$debug_commands = "$project/Settings/debug.txt";
 				if (file_exists($debug_commands)) {
@@ -1317,7 +1406,7 @@ command;
 				} else {
 					run_in_terminal("/usr/bin/lldb $binary");
 				}
-			} else if ($debug == "vscode") {
+			} else if ($build_variant == "vscode") {
 				// $vscode_project = "";
 				$command = "open -a \"Visual Studio Code\"";
 				print("[$command]\n");
@@ -1334,29 +1423,107 @@ command;
 	}
 }
 
+// runs a program file quickly and saves output to temporary location
+// meant to be used with shell alias "fpcbuild" as a quick replacemnet
+// for "fpc" on the commandline
+function run_quick_file(string $file): void {
+	
+	// sanity test
+	if (!file_exists($file)) die("no input file!");
+
+	$temp = sys_get_temp_dir().'/fpc';
+	@mkdir($temp);
+
+	$executable = $temp.'/'.basename_no_ext($file);
+	$sdk_path = find_sdk_path();
+	$version = find_fpc_version(true);
+	$options = array( "-vbr",
+									  // "-gw",
+									  // "-godwarfcpp",
+									  "-XR$sdk_path",
+									  "-o$executable"
+										);
+	$options = implode(" ", $options);
+
+	$arch = "ppcx64";
+	$fpc = "/usr/local/lib/fpc/$version/$arch";
+
+	if (!file_exists($fpc)) {
+		print("compiler '$fpc' doesn''t exist, reverting to default.\n");
+		$fpc = "/usr/local/bin/fpc";
+	}
+	
+	$command = "$fpc $options \"$file\"";
+
+	if (run_command($command) == 0) {
+		run_in_terminal($executable);
+		// passthru($executable);
+	}
+
+	build_finished();
+}
+
 function show_inputs() {
 	global $argv;
 	global $file;
 	global $project_path;
+	global $project_file;
 
 	print_r($argv);
 	print("\$file: $file\n");
 	print("\$project_path: $project_path\n");
+	print("\$project_file: $project_file\n");
 }
 
 // ================================================================================================
 // MAIN
 // ================================================================================================
 
+// TODO: we broke command line options which we need for fpc app build scripts
+$longopts  = array(
+    "target::",
+    "laz",
+    "quick::"
+);
+if ($cmd = getopt('t:l', $longopts)) {
+	// print_r($cmd);
+	// print_r($argv);
+	// last argv is always the project path
+	$project_path = $argv[count($argv) - 1];
+	if (!file_exists($project_path))
+		fatal("project path '$project_path' doesn't exist.");
+	
+	if (array_key_exists('laz', $cmd)) {
+		run_lazarus($project_path);
+		build_finished();
+	} else if (array_key_exists('quick', $cmd)) {
+		run_quick_file($project_path);
+	} else {
+		// nothing to do
+		build_finished();
+	}
+
+}
+
+// TODO: make an alias for 'fpcbuild' and use a single file run that moves binary to temp file (like pps)
+// TODO: make a proper fpc_latest lookup OR $FPC_VERSION variable to put into .bash_profile so we can set
+// the correct version for the entire shell
+
+// must supply command line arguments
+if (count($argv) == 1) {
+	die("no options provided.\n");
+}
+
 $file = $argv[1];						// path to current file
 $project_path = $argv[2];		// path to directory containing sublime-project file
-$build_variant = $argv[3];	// sublime-build "variants" key
+$project_file = $argv[3];		// path to *.sublime-project file
+$build_variant = $argv[4];	// sublime-build "variants" key
 
 // show_inputs();
 
 // run as lazarus project
 if ($build_variant == "lazarus") {
-	run_lazarus($project_path);
+	run_lazarus($project_path, $project_file);
 	build_finished();
 }
 
@@ -1366,20 +1533,30 @@ if (file_exists($file)) {
 }
 
 // try to use .fpcbuild in the project directory
-if ($project_path) {
-	try_to_load_fpc_build($project_path, $file);
-}
-
-// no project, use single file
-if (!$project_path) {
-	$parent = dirname($file);
-	if (!find_fpc_build($parent)) create_default_settings($parent, 'settings/fpc_settings.json', array());
-	$fpcbuild = try_to_load_fpc_build($parent, $file);
-	run_single_file($file, $fpcbuild);
+if (file_exists($project_file)) {
+	
+	$fpcbuild = load_fpc_build($project_file);
+	// if there is a build_script defined then override the project settings
+	if ($fpcbuild['build_script']) {
+		run_build_script($file, $project_file, $fpcbuild);
+	} else {
+		run_project($file, $project_file, $fpcbuild, $build_variant);
+	}
+} else {
+	// TODO: killing this for now because I'm not sure .fpcbuild for single files
+	// makes anysense at all. thinking about maybe making meta data editor to add plists
+	// $parent = dirname($file);
+	// if (!find_fpc_build($parent)) {
+	// 	if (!create_default_settings($parent, 'settings/fpc_settings.json', array())) {
+	// 		die("must have a .fpcbuild to run\n");
+	// 	}
+	// }
+	// $fpcbuild = try_to_load_fpc_build(null, $parent, $file);
+	// run_single_file($file, $fpcbuild);
+	// build_finished(0);
+	run_single_file($file);
 	build_finished(0);
 }
 
-// run project using .settings files
-run_project($file, $project_path, $build_variant);
 
 ?>
