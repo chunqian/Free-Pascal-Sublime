@@ -488,8 +488,8 @@ function copy_file($src, $dest) {
 	if (!compare_files($src, $dest)) {
 		//print("copy_file $src to $dest\n");
 		//@mkdir(dirname($dest));
-		if (!copy($src, $dest)) fatal("copy resource failed.");
-		if (!touch($dest, filemtime($src))) fatal("copy resource failed.");
+		if (!copy($src, $dest)) fatal("copy resource failed ($src -> $dest).");
+		if (!touch($dest, filemtime($src))) fatal("copy resource failed ($src -> $dest).");
 	}
 }
 
@@ -630,9 +630,10 @@ function make_bundle(string $binary, string $bundle, ?array $resource_paths): st
 
 	// copy info.plist
 	$path = get_setting(SETTING_COMMON, SETTING_COMMON_INFO_PLIST, SETTING_IS_PATH);
-	$dest = "$bundle/Contents/info.plist";
+	$dest = "$bundle/Contents/Info.plist";
 	increment_build($path);
 	copy_file($path, $dest);
+	print_r(get_setting(SETTING_MACROS));
 	replace_file_macros($dest, get_setting(SETTING_MACROS));
 
 	// copy resources
@@ -802,53 +803,6 @@ function find_fpc_version(bool $latest): string {
 	} else {
 		if (!$_ENV['FPC_STABLE_VERSION']) fatal("FPC_STABLE_VERSION must be set in shell profile.\n");
 		return $_ENV['FPC_STABLE_VERSION'];
-	}
-}
-
-function fpc_latest(bool $trunk = false): string {
-	if ($trunk) {
-		return '3.3.1';
-	} else {
-		return '3.0.4';
-	}
-}
-
-function fpc($program, $version = "3.3.1", $arch = "ppcx64", $options = "") {
-
-	// since PHP doesn't have oveloads if version is a full path 
-	// then use this as the fpc compiler
-	if (file_exists($version)) {
-		$fpc = $version;
-	} else {
-		$fpc = "/usr/local/lib/fpc/$version/$arch";
-		if (!file_exists($fpc)) {
-			fatal("path to fpc '$fpc' doesn't exist.");
-		}
-	}
-
-	$options .= default_fpc_options();
-
-	// TODO: allow using other units
-	$base = "/Users/ryanjoseph/Downloads/freepascal";
-	$rtl = "-Fu$base/rtl/units/x86_64-darwin";
-	// $packages = "-Fu$base/packages/rtl-extra/units/x86_64-darwin";
-	$options .= " -CR $packages $rtl";
-
-	$command = "$fpc $options \"$program\"";
-	return run_command($command);
-}
-
-function build_and_run($compiler, $program, $options) {
-	$options .= default_fpc_options();
-	$command = "$compiler $program $options";
-	if (run_command($command) == 0) {
-		$name = basename_no_ext($program);
-		$exec = dirname($program)."/$name";
-		if (file_exists($exec)) {
-			run_in_terminal($exec);
-		} else {
-			fatal("can't find executable $exec");
-		}
 	}
 }
 
@@ -1047,11 +1001,14 @@ function create_project_settings(string $project_file, string $template, array $
 	// load settings template
 	$contents = file_get_contents(__DIR__.'/'.$template);
 	$contents = json_clean($contents);
+	if (!$contents) fatal("invalid settings template '$template'.");
+
 	// replace settings macros
 	foreach ($macros as $key => $value) {
 		$contents = preg_replace('/\$\(('.$key.')\)/', $macros[$key], $contents);
 	}
 	$template = json_decode($contents, true);
+	if (!$template) fatal("template json failed to decode.");
 
 	// load sublime-project json
 	$contents = file_get_contents($project_file);
@@ -1079,13 +1036,13 @@ function run_single_file(string $file, array $fpcbuild = null) {
 	}
 
 	$macros['$dir'] = dirname($fpcbuild['FPCBUILD_PATH']);
-	$macros['$fpc_latest'] = fpc_latest();
+	$macros['$fpc_latest'] = find_fpc_version(true);
 
 	// default single file behavior
 	if ($fpcbuild['compiler']) {
 		$fpc = resolve_fpc_build_macro($macros, $fpcbuild['compiler']);
 	} else {
-		$version = fpc_latest();
+		$version = find_fpc_version(true);
 		$arch = "ppcx64";
 		$fpc = "/usr/local/lib/fpc/$version/$arch";
 	}
@@ -1255,7 +1212,8 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 	$macros = array(
 		'~' => $user_path,
 		'$project' => $project,
-		'$parent' => dirname($project)
+		'$parent' => dirname($project),
+		'$sdk_path' => dirname(find_sdk_path())
 	);
 
 	// macros which are replaced in new settings file
@@ -1269,30 +1227,6 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 	if (!$fpcbuild) {
 		create_project_settings($project_file, 'settings/bundle_settings.json', $settings_macros);
 		$fpcbuild = load_fpc_build($project_file);
-
-		/*
-		print("creating new fpcbuild settings in project '$project_file'.\n");
-		// load settings template
-		$contents = file_get_contents(__DIR__.'/settings/bundle_settings.json');
-		$contents = json_clean($contents);
-		// replace settings macros
-		foreach ($settings_macros as $key => $value) {
-			$contents = preg_replace('/\$\(('.$key.')\)/', $settings_macros[$key], $contents);
-		}
-		$template = json_decode($contents, true);
-
-		// load sublime-project json
-		$contents = file_get_contents($project_file);
-		$data = json_decode($contents, true);
-		$data["settings"]["fpcbuild"] = $template;
-
-		$contents = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-		file_put_contents($project_file, $contents);
-		// if (!create_default_settings($project, 'settings/bundle_settings.json', $settings_macros)) {
-		// 	print("there are no build settings available for project\n");
-		// 	exit;
-		// }
-		*/
 	}
 
 	$settings = load_settings($fpcbuild);
@@ -1527,10 +1461,11 @@ if ($build_variant == "lazarus") {
 	build_finished();
 }
 
+// TODO: finally going to retire this
 // parse run script from header
-if (file_exists($file)) {
-	if (parse_run_script($file)) build_finished();
-}
+// if (file_exists($file)) {
+// 	if (parse_run_script($file)) build_finished();
+// }
 
 // try to use .fpcbuild in the project directory
 if (file_exists($project_file)) {

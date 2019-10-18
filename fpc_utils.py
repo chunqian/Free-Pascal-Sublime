@@ -267,7 +267,8 @@ class FindAllOccurencesCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		# select the word under the cursor
-		self.view.window().run_command("find_under_expand")
+		# self.view.window().run_command("find_under_expand")
+		self.view.window().run_command("expand_selection", {"to": "word"})
 		sel = self.view.sel()[0]
 		word = self.view.substr(sel)
 		regions = self.view.find_all("("+word+")")
@@ -329,7 +330,7 @@ class LazDocCommand(sublime_plugin.TextCommand):
 
 	def run(self, edit):
 		# select the word under the cursor
-		self.view.window().run_command("find_under_expand")
+		self.view.window().run_command("expand_selection", {"to": "word"})
 		sel = self.view.sel()[0]
 		word = self.view.substr(sel)
 
@@ -349,10 +350,24 @@ class LazDocCommand(sublime_plugin.TextCommand):
 				for result in root.findall('result'): 
 					link = result.attrib['link']
 
+					# TODO: getlazarus.org is bugged and returns HTML tags in the title tag
+					# we need to parse these out or include them
+					# <title>
+					# 	<b>TJSONObject</b>
+					# 	Class
+					# </title>
 					title = result.find('title').text
+
+					# attempt to parse children and retain some data
 					if title == None:
-						title = "UNKNOWN"
+						title = ""
+						for child in result.find('title'):
+							if title != "":
+								title += " "
+							title += child.text
+
 					kind = result.find('kind').text
+					path = result.find('path').text
 					description = result.find('description').text
 
 					html += "<h2><a href=\""+link+"\">"+title+"</a></h2>"

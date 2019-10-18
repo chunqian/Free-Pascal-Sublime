@@ -10,9 +10,9 @@
 	<string>\b(?i:(end))\b|\*\)</string>
 	-->
 
-	<!-- /////////////////////////////////////////// -->
+	<!-- ////////////////////////////////////////////////////////////////////////////////////// -->
 	<!-- PATTERNS -->
-	<!-- /////////////////////////////////////////// -->
+	<!-- ////////////////////////////////////////////////////////////////////////////////////// -->
 
 	<key>patterns</key>
 	<array>
@@ -900,6 +900,36 @@
 			<key>name</key>
 			<string>meta.function.declared.pascal</string>
 		</dict>
+		<!-- generic function declaration -->
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.control.pascal</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.control.pascal</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>storage.name.function.pascal</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.function.pascal</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^\s*(generic)\s+(function|procedure)+\s+([a-zA-Z0-9._]+)\s*&lt;(.*)&gt;</string>
+			<key>name</key>
+			<string>meta.function.declared.pascal</string>
+		</dict>
 		<!-- class operator declaration -->
 		<dict>
 			<key>captures</key>
@@ -1007,7 +1037,7 @@
 			<key>comment</key>
 			<string>Common keywords</string>
 			<key>match</key>
-			<string>\b(?i:(fixed|constructor|destructor|property|function|procedure|class|object|shl|shr|strict|bitpacked|continue|is|as|break|read|implements|library|real|ansistring|widestring|unicodestring|ansichar|widechar|unicodechar|single|double|pchar|try|finally|except|on|exception|exports|dispose|univ|exit|halt|char|pointer|new|sizeof|forward|uses|const|constref|cycle|var|threadvar|class|object|record|type|implementation|interface|begin|end|integer|boolean|bytebool|wordbool||longbool|longint|byte|shortint|smallint|word|cardinal|longword|int64|qword|variant|and|array|case|div|do|downto|else|file|for|goto|if|in|inherited|label|leave|mod|not|of|or|xor|otherwise|packed|program|public|private|protected|published|repeat|raise|set|string|then|to|until|unit|while|with|absolute|sealed|generic|specialize|out|reference|nested|initialization|finalization))\b</string>
+			<string>\b(?i:(fixed|constructor|destructor|property|function|procedure|class|object|shl|shr|strict|bitpacked|continue|is|as|break|read|implements|library|real|ansistring|widestring|unicodestring|resourcestring|ansichar|widechar|unicodechar|single|double|pchar|try|finally|except|on|exception|exports|dispose|univ|exit|halt|char|pointer|new|sizeof|forward|uses|const|constref|cycle|var|threadvar|class|object|record|type|implementation|interface|begin|end|integer|boolean|bytebool|wordbool||longbool|longint|byte|shortint|smallint|word|cardinal|longword|int64|qword|variant|and|array|case|div|do|downto|else|file|for|goto|if|in|inherited|label|leave|mod|not|of|or|xor|otherwise|packed|program|public|private|protected|published|repeat|raise|set|string|then|to|until|unit|while|with|absolute|sealed|generic|specialize|out|reference|nested|initialization|finalization))\b</string>
 			<key>name</key>
 			<string>keyword.control.pascal</string>
 		</dict>
@@ -1187,9 +1217,9 @@
 		</dict>
 	</array>
 
-	<!-- /////////////////////////////////////////// -->
+	<!-- ////////////////////////////////////////////////////////////////////////////////////// -->
 	<!-- REPOSITORY -->
-	<!-- /////////////////////////////////////////// -->
+	<!-- ////////////////////////////////////////////////////////////////////////////////////// -->
 
 	<key>repository</key>
 	<dict>
@@ -1219,7 +1249,7 @@
 		<key>begin_end_block</key>
 		<dict>
 			<key>begin</key>
-			<string>^\s*\b(?i:(begin|case))\b</string>
+			<string>^\s*\b(?i:(begin|case|try))\b</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>0</key>

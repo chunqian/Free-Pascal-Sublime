@@ -2,6 +2,7 @@
 	{ "caption": "-"},
 	// { "caption": "Goto Symbol...", "command": "goto_function_implementation" },
 	{ "caption": "Find All Occurences...", "command": "find_all_occurences" },
+  { "caption": "Search FPC Documentation...", "command": "laz_doc" },
 	// note: break points are deprecated for VSCode
 	// { "caption": "-"},
 	// { "caption": "Add Break Point", "command": "add_break_point" },

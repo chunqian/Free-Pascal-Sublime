@@ -45,7 +45,7 @@
         "version": "3.3.1",
         "architecture": "ppcx64",
         "minimum_system_version": "10.10",
-        "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+        "sdk": "$sdk_path/MacOSX.sdk"
       },
       "macros": {
         "product_name": "$(program-file)",
@@ -112,6 +112,9 @@
         "CFBundleIdentifier": "com.$company.$product_name",
         "CFBundleExecutable": "$product_name",
         "CFBundleIconFile": ""
+      },
+      "resource_paths": {
+        "$project/image.png": "$bundle/Contents/Resources"
       }
     }
   }

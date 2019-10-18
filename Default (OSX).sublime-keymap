@@ -9,7 +9,7 @@
 		"args": { "variant": "Debug" }, 
 		"context": [ { "key": "selector", "operator": "equal", "operand": "source" } ] 
 	},
-	{ "keys": ["super+shift+h"], 
+	{ "keys": ["ctrl+super+h"], 
 		"command": "dash_doc",
 		"context": [ { "key": "selector", "operator": "equal", "operand": "source" } ] 
 	},
