@@ -103,7 +103,7 @@
       "codesign_identity": "Developer ID Application",
       "codesign_enabled": false,
       "options": [
-        "-k\"-rpath @loader_path/Frameworks\""
+        "-k\"-rpath @loader_path/../Frameworks\""
       ],
       "macros": {
         "CFBundleName": "$product_name",

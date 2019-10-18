@@ -633,7 +633,7 @@ function make_bundle(string $binary, string $bundle, ?array $resource_paths): st
 	$dest = "$bundle/Contents/Info.plist";
 	increment_build($path);
 	copy_file($path, $dest);
-	print_r(get_setting(SETTING_MACROS));
+	// print_r(get_setting(SETTING_MACROS));
 	replace_file_macros($dest, get_setting(SETTING_MACROS));
 
 	// copy resources
@@ -833,78 +833,6 @@ function prepare_debug_settings($project, $extra_commands = "") {
 	if ($extra_commands) $final = $final."\n".implode("\n", $extra_commands);
 	file_put_contents("$project/Settings/debug.txt", $final);
 }
-
-function consume_token($handle, $token, $match_first, &$out_index, &$buffer, $maxlength) {
-	$text = "";
-	$curlen = 0;
-	$curindex = ftell($handle);
-	$buflen = 128;
-	$out_index = NULL;
-	$white_space = array(" ", "	");
-	if ($buflen > $maxlength) {
-		$buflen = $maxlength;
-	}
-	while ($text .= fread($handle, $buflen)) {
-		for ($t=0; $t < strlen($text); $t++) {
-			$buffer .= $text[$t];
-			for ($i=0; $i < strlen($token); $i++) {
-				// reading past text chunk, break before the current chunk
-				// is reset so we can append the remaining string
-				if ($t+$i > strlen($text)) break;
-
-				if ($text[$t+$i] != $token[$i]) {
-					// the first charater in the chunk isn't in the token
-					// which means we broke the match_first rule
-					if ($match_first && $t == 0) return false;
-					break;
-				}
-			}
-			if ($i == strlen($token)) {
-				$out_index = $curindex + $i;
-				// append remaining chars in buffer
-				$buffer .= substr($text, $out_index, strlen($text) - $out_index);
-				// print("found token $token at $out_index\n");
-				return true;
-			}
-			$curindex += 1;
-		}
-
-		// clear chunk for next pass
-		$text = "";
-	}
-	return false;
-}
-
-function parse_run_script($file) {
-	$handle = fopen($file, "r");
-	if ($handle) {
-		$buffer = "";
-		fseek($handle, 0);
-		// search first 12 chars for start of script tag
-    if (consume_token($handle, "(*", true, $start_index, $buffer, 12)) {
-    	if (consume_token($handle, "*)", false, $end_index, $buffer, 1024)) {
-    		// print("found scrip tag at $start_index/$end_index\n");
-    		$script = substr($buffer, $start_index, ($end_index-$start_index)-3);
-    		// print($script);
-    		// declare globals which are available in eval()
-    		$program = $GLOBALS["argv"][1];
-    		$info = pathinfo($program);
-    		$exec_name = $info["filename"];
-    		$executable = $info["dirname"]."/".$info["filename"];
-    		$dir = $GLOBALS["argv"][2];
-    		// fallback to cwd for single files
-    		if ($dir == "") $dir = getcwd();
-    		eval($script);
-    		return true;
-    	}
-    }
-    fclose($handle);
-	} else {
-	  fatal("can't open file '$file' for reading.");
-	} 
-	return false;
-}
-
 
 function load_fpc_build(string $path): ?array {
 	if (file_exists($path)) {
@@ -1231,6 +1159,7 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 
 	$settings = load_settings($fpcbuild);
 	// print_r($settings);
+	// die;
 	$macros = array_merge($macros, $settings["macros"]);
 
 	// common
@@ -1323,9 +1252,7 @@ command;
 		}
 
 		// make the actual bundle if the target is of type 'bundle'
-		if ($target_name == 'bundle') {
-			$binary = make_bundle($binary, $bundle, $resource_paths);
-		}
+		if (file_exists($bundle)) $binary = make_bundle($binary, $bundle, $resource_paths);
 
 		// run the executable
 		if ($run_after_build) {
@@ -1460,12 +1387,6 @@ if ($build_variant == "lazarus") {
 	run_lazarus($project_path, $project_file);
 	build_finished();
 }
-
-// TODO: finally going to retire this
-// parse run script from header
-// if (file_exists($file)) {
-// 	if (parse_run_script($file)) build_finished();
-// }
 
 // try to use .fpcbuild in the project directory
 if (file_exists($project_file)) {
