@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+try
+  $0
+finally
+end;
+]]></content>
+  <description>try .. finally</description>
+    <tabTrigger>try</tabTrigger>
+    <scope>source.pascal,meta.scope.begin</scope> 
+</snippet>

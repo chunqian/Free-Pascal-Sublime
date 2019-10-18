@@ -1,0 +1,10 @@
+<snippet>
+    <content><![CDATA[
+//#########################################################
+// $0
+//#########################################################
+]]></content>
+	<description>header</description>
+    <tabTrigger>head</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

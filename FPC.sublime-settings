@@ -1,0 +1,9 @@
+{
+	"color_scheme": "Packages/FPC/Xcode.tmTheme",
+	"extensions":
+	[
+		"pas",
+		"inc",
+		"pp"
+	]
+}
