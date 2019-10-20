@@ -8,7 +8,7 @@
 	"variants": [
 		{ 
 			"name": "Quick",
-		  "cmd": ["php", "$packages/FPC/build.php", "--quick", "$file"],
+		  "cmd": ["php", "$packages/FPC/build.php", "$file", "$project_path", "$project", "quick"],
 		},
 	  { 
 	  	"name": "Debug",

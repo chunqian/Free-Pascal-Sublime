@@ -31,7 +31,7 @@ const SETTING_COMMON_PRODUCT_NAME = "product_name";
 const SETTING_COMMON_PRODUCT_PATH = "product_path";
 const SETTING_COMMON_TARGET = "target";
 const SETTING_COMMON_BUNDLE = "bundle";
-const SETTING_COMMON_MAIN = "main";
+const SETTING_COMMON_PROGRAM = "program";
 
 const SETTING_COMPILER_ARCHITECTURE = "architecture";
 const SETTING_COMPILER_VERSION = "version";
@@ -42,12 +42,20 @@ const SETTING_IS_PATH = true;
 const SETTING_REQUIRED = true;
 const SETTING_OPTIONAL = false;
 
+const BUILD_MODE_DEFAULT = 'default';			// run fpcbuild project
+const BUILD_MODE_DEBUG = 'debug';					// build with debug configuration and run with lldb
+const BUILD_MODE_VSCODE = 'vscode';				// open VSCode after building
+const BUILD_MODE_LAZARUS = 'lazarus';			// run project with lazbuild and .fpcbuild file for settings
+const BUILD_MODE_QUICK = 'quick';					// build with standard settings and output to temp directory
+const BUILD_MODE_NO_RUN = '';							// build but do not run
+
 // ================================================================================================
 // GLOBALS
 // ================================================================================================
 
 $settings = array();
 $macros = array();
+$enable_ansi_colors = false;
 
 // ================================================================================================
 // UTILITIES
@@ -110,6 +118,40 @@ function keytolower(?string $str): string {
 	return $str;
 }
 
+const ANSI_FORE_BLACK           = 30;
+const ANSI_FORE_RED             = 31;
+const ANSI_FORE_GREEN           = 32;
+const ANSI_FORE_YELLOW          = 33;
+const ANSI_FORE_BLUE            = 34;
+const ANSI_FORE_MAGENTA         = 35;
+const ANSI_FORE_CYAN            = 36;
+const ANSI_FORE_WHITE           = 37;
+const ANSI_FORE_RESET           = 39;
+
+const ANSI_BACK_BLACK           = 40;
+const ANSI_BACK_RED             = 41;
+const ANSI_BACK_GREEN           = 42;
+const ANSI_BACK_YELLOW          = 43;
+const ANSI_BACK_BLUE            = 44;
+const ANSI_BACK_MAGENTA         = 45;
+const ANSI_BACK_CYAN            = 46;
+const ANSI_BACK_WHITE           = 47;
+const ANSI_BACK_RESET           = 49;
+
+const ANSI_STYLE_BOLD           = 1;
+const ANSI_STYLE_ITALIC         = 3;
+const ANSI_STYLE_UNDERLINE      = 4;
+const ANSI_STYLE_BLINK          = 5;
+
+function printc(int $color, string $text) {
+	global $enable_ansi_colors;
+	if ($enable_ansi_colors) {
+		print("\033[".$color."m".$text."\033[0m\n");
+	} else {
+		print($text);
+	}
+}
+
 function run_in_terminal($script) {
 	// just to be sure
 	$script = addslashes($script);
@@ -166,6 +208,12 @@ function ask_dialog(string $message, array $buttons): string {
 	}
 }
 
+function passthru2(string $command, ?int &$exit_code): void {
+	printc(ANSI_FORE_BLUE, "[$command]\n");
+	passthru($command, $exit_code);
+	if ($exit_code != 0) fatal("command failed.");
+}
+
 function compare_files ($a, $b) {
 	if (!file_exists($a)) return false;
 	if (!file_exists($b)) return false;
@@ -188,19 +236,21 @@ function file_ext($path) {
 // ================================================================================================
 
 // the final stage in building is complete so exit the script
-function build_finished(int $error_code=0): void {
+function build_finished(int $error_code = 0): void {
 	exit($error_code);
 }
 
 // standard fatal error to exit script
-function fatal(string $error, bool $show_error = true): void {
+function fatal(string $error, bool $show_error = true, bool $show_trace = true): void {
 	global $argv;
 	print("FATAL: $error\n");
 	// show an error which we can see in the current file
 	if ($argv[1]) {
 		if ($show_error) show_error($argv[1], $error, false);
-		$e = new Exception;
-		var_dump($e->getTraceAsString());
+		if ($show_trace) {
+			$e = new Exception;
+			var_dump($e->getTraceAsString());
+		}
 	}
 	exit(-1);
 }
@@ -349,7 +399,13 @@ function get_setting(string $category, string $name = "", bool $is_path = false,
 	}
 	$value = resolve_macro($value);
 
-	if (($is_path == SETTING_IS_PATH) && ($required) && (!file_exists($value))) fatal("Setting path '$value' for key '$name' doesn't exist.");
+	if (($is_path == SETTING_IS_PATH) && ($required) && (!file_exists($value))) {
+		if ($value) {
+			fatal("Setting path '$value' for key '$name' doesn't exist.");
+		} else {
+			fatal("Required setting key '$name' doesn't exist.");
+		}
+	}
 	if ($value == "") {
 		if ($required) {
 			fatal("Setting '$category/$name' is missing");
@@ -552,6 +608,28 @@ function require_file($path, $message = "") {
 	}
 }
 
+function find_symlinks (string $dir): int {
+	// ls -la shows links in terminal
+	$errors = 0;
+	$files = scandir($dir);
+	foreach ($files as $name) {
+		if ($name[0] == ".") continue;
+		$path = $dir."/".$name;
+		if (is_link($path)) {
+			$link = readlink($path);
+			$full = "$dir/$link";
+			//print("$full\n");
+			if (!file_exists($full)) {
+				printc("WARNING: $path -> $full\n");
+				$errors++;
+			}
+			continue;
+		}
+		if (is_dir($path)) find_symlinks($path);
+	}
+	return $errors;
+}
+
 function codesign_bundle ($bundle, $entitlements, $identity, $always = true) {
 	if ($always) {
 		$force = "-f";
@@ -568,30 +646,23 @@ function codesign_bundle ($bundle, $entitlements, $identity, $always = true) {
 			if ($name[0] == ".") continue;
 			$path = $frameworks."/".$name;
 			$command = "codesign $force -s \"$identity\" \"$path\"";
-			print("[$command]\n");
-			passthru($command, $exit_code);
+			// print("[$command]\n");
+			passthru2($command, $exit_code);
 			if ($exit_code != 0) fatal("codesign failed.");
 		}
 	}
 
 	// codesign bundle
 	$command = "codesign $force --entitlements \"$entitlements\" -s \"$identity\" \"$bundle\"";
-	print("[$command]\n");
-	passthru($command, $exit_code);
-	if ($exit_code != 0) fatal("codesign failed.");
+	passthru2($command, $exit_code);
 
 	// verify 
 	$command = "codesign --verify --deep --strict \"$bundle\"";
-	print("[$command]\n");
-	passthru($command, $exit_code);
-	if ($exit_code != 0) fatal("Product '$bundle' failed codesign verification.");
+	passthru2($command, $exit_code);
 
 	// verify gatekeeper
 	$command = "spctl -a -vvvv \"$bundle\"";
-	print("[$command]\n");
-	passthru($command, $exit_code);
-	if ($exit_code != 0) fatal("Product '$bundle' failed gatekeeper verification.");
-
+	passthru2($command, $exit_code);
 }
 
 // moves executable to /bin directory (as specified in .fpcbuild)
@@ -650,6 +721,9 @@ function make_bundle(string $binary, string $bundle, ?array $resource_paths): st
 		if ($enabled) codesign_bundle($bundle, $entitlements, $identity, true);
 	}
 
+	// verify symlinks in bundle
+	find_symlinks($bundle);
+
 	return $binary;
 }
 
@@ -696,7 +770,8 @@ function find_fpc_build(string $project): ?string {
 
 function run_command(string $command, bool $redirect_stdout = true): int {
 	//passthru($command, $exit_code);
-	print("[$command]\n");
+	// print("[$command]\n");
+	printc(ANSI_FORE_BLUE, "[$command]\n");
 	$exit_code = -1;
 	if ($redirect_stdout) $command = "$command 2>&1 >/dev/null";
 	$ignored_errors = 0;
@@ -742,7 +817,8 @@ function lazbuild(string $project, string $options = ""): int {
 	//passthru($command, $exit_code);
 	$exit_code = -1;
 	$command = "lazbuild \"$project\" $options";
-	print("[$command]\n");
+	// print("[$command]\n");
+	printc(ANSI_FORE_BLUE, "[$command]\n");
 	if ($handle = popen("$command", "r")) {
 		while (!feof($handle)) {
 			$buffer = fgets($handle, 1024);
@@ -954,7 +1030,7 @@ function create_project_settings(string $project_file, string $template, array $
 function run_single_file(string $file, array $fpcbuild = null) {
 
 	// sanity test
-	if (!file_exists($file)) die("no input file!");
+	if (!file_exists($file)) fatal("no input file!");
 
 	// make macros
 	if ($fpcbuild['macros']) {
@@ -1121,7 +1197,7 @@ function run_build_script(string $file, string $project_file, array $fpcbuild) {
 	build_finished();
 }
 
-function run_project(string $file, string $project_file, ?array $fpcbuild, ?string $build_variant): void {
+function run_project(string $file, string $project_file, ?array $fpcbuild, ?string $build_variant, bool $clean_build = false): void {
 	global $macros;
 	global $settings;
 
@@ -1134,7 +1210,6 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 
 	$user_path = "/Users/".exec("/usr/bin/whoami");
 	$run_after_build = true;
-	$clean_build = false;
 
 	// setup default macros
 	$macros = array(
@@ -1167,11 +1242,11 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 	$product_name = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_NAME);
 	$product_path = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_PATH);
 	$target_config = $fpcbuild['configuration'];
-	$main = get_setting(SETTING_COMMON, SETTING_COMMON_MAIN, true);
+	$program = get_setting(SETTING_COMMON, SETTING_COMMON_PROGRAM, true);
 	$bundle = get_setting(SETTING_COMMON, SETTING_COMMON_BUNDLE, true, false);
 
 	// add extra macros from settings
-	if ($main) $macros['$main'] = $main;
+	if ($program) $macros['$program'] = $program;
 	if ($bundle) $macros['$bundle'] = $bundle;
 
 	// compiler
@@ -1218,17 +1293,17 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 
 	// clean output directory
 	if ($clean_build && file_exists($output)) {
-		print("Cleaning output directory at '$output'...");
-		rrmdir($output);
+		print("Cleaning output directory at '$output'...\n");
+		// rrmdir($output);
+		exec("trash $output");
 	}
 
 	// make output directory
 	@mkdir($output);
 
 	// build
-	// NOTE: -k"-macosx_version_min $min_system_version" is being replaced by -WM10.10 option
 	$command = <<<command
-$fpc "$main" $options $source_paths $framework_paths $library_paths $include_paths
+$fpc "$program" $options $source_paths $framework_paths $library_paths $include_paths
 command;
 	$command = trim($command);
 
@@ -1236,7 +1311,7 @@ command;
 	$exit_code = run_command($command);
 
 	if ($exit_code == 0) {
-		$path_info = pathinfo($main);
+		$path_info = pathinfo($program);
 
 		// verify the binary/executable location
 		$binary = $product_path;
@@ -1259,22 +1334,31 @@ command;
 
 			// TODO: add env common setting to $binary string
 
-			if ($build_variant == "debug") {
-				prepare_debug_settings($project, array("r"));
-				$debug_commands = "$project/Settings/debug.txt";
-				if (file_exists($debug_commands)) {
-					run_in_terminal("/usr/bin/lldb --source \"$debug_commands\" $binary");
-				} else {
-					run_in_terminal("/usr/bin/lldb $binary");
-				}
-			} else if ($build_variant == "vscode") {
-				// $vscode_project = "";
-				$command = "open -a \"Visual Studio Code\"";
-				print("[$command]\n");
-				passthru($command, $exit_code);
-				build_finished(0);
-			} else {
-				run_in_terminal($binary);
+			switch ($build_variant) {
+				case BUILD_MODE_DEBUG:
+					prepare_debug_settings($project, array("r"));
+					$debug_commands = "$project/Settings/debug.txt";
+					if (file_exists($debug_commands)) {
+						run_in_terminal("/usr/bin/lldb --source \"$debug_commands\" $binary");
+					} else {
+						run_in_terminal("/usr/bin/lldb $binary");
+					}
+					break;
+
+			  case BUILD_MODE_VSCODE:
+			  	$command = "open -a \"Visual Studio Code\"";
+			  	// print("[$command]\n");
+			  	// passthru($command, $exit_code);
+			  	passthru2($command);
+			  	build_finished(0);
+			  	break;
+
+			  case BUILD_MODE_DEFAULT:
+			  	run_in_terminal($binary);
+			  	break;
+
+				default:
+					break;
 			}
 		}
 		
@@ -1340,79 +1424,54 @@ function show_inputs() {
 // MAIN
 // ================================================================================================
 
-// TODO: we broke command line options which we need for fpc app build scripts
-$longopts  = array(
-    "target::",
-    "laz",
-    "quick::"
-);
-if ($cmd = getopt('t:l', $longopts)) {
-	// print_r($cmd);
-	// print_r($argv);
-	// last argv is always the project path
-	$project_path = $argv[count($argv) - 1];
-	if (!file_exists($project_path))
-		fatal("project path '$project_path' doesn't exist.");
-	
-	if (array_key_exists('laz', $cmd)) {
-		run_lazarus($project_path);
-		build_finished();
-	} else if (array_key_exists('quick', $cmd)) {
-		run_quick_file($project_path);
-	} else {
-		// nothing to do
-		build_finished();
-	}
-
-}
-
-// TODO: make an alias for 'fpcbuild' and use a single file run that moves binary to temp file (like pps)
-// TODO: make a proper fpc_latest lookup OR $FPC_VERSION variable to put into .bash_profile so we can set
-// the correct version for the entire shell
-
-// must supply command line arguments
-if (count($argv) == 1) {
-	die("no options provided.\n");
-}
-
 $file = $argv[1];						// path to current file
 $project_path = $argv[2];		// path to directory containing sublime-project file
 $project_file = $argv[3];		// path to *.sublime-project file
 $build_variant = $argv[4];	// sublime-build "variants" key
 
-// show_inputs();
-
-// run as lazarus project
-if ($build_variant == "lazarus") {
-	run_lazarus($project_path, $project_file);
-	build_finished();
-}
-
-// try to use .fpcbuild in the project directory
-if (file_exists($project_file)) {
+switch ($build_variant) {
+	case BUILD_MODE_DEFAULT:
+	case BUILD_MODE_DEBUG:
+	case BUILD_MODE_VSCODE:
+		// try to use .fpcbuild in the project directory
+		if (file_exists($project_file)) {
+			
+			$fpcbuild = load_fpc_build($project_file);
+			// if there is a build_script defined then override the project settings
+			if ($fpcbuild['build_script']) {
+				run_build_script($file, $project_file, $fpcbuild);
+			} else {
+				run_project($file, $project_file, $fpcbuild, $build_variant, false);
+			}
+		} else if ($file) {
+			// TODO: killing this for now because I'm not sure .fpcbuild for single files
+			// makes anysense at all. thinking about maybe making meta data editor to add plists
+			// $parent = dirname($file);
+			// if (!find_fpc_build($parent)) {
+			// 	if (!create_default_settings($parent, 'settings/fpc_settings.json', array())) {
+			// 		die("must have a .fpcbuild to run\n");
+			// 	}
+			// }
+			// $fpcbuild = try_to_load_fpc_build(null, $parent, $file);
+			// run_single_file($file, $fpcbuild);
+			// build_finished(0);
+			run_single_file($file);
+			build_finished(0);
+		}
+		break;
 	
-	$fpcbuild = load_fpc_build($project_file);
-	// if there is a build_script defined then override the project settings
-	if ($fpcbuild['build_script']) {
-		run_build_script($file, $project_file, $fpcbuild);
-	} else {
-		run_project($file, $project_file, $fpcbuild, $build_variant);
-	}
-} else {
-	// TODO: killing this for now because I'm not sure .fpcbuild for single files
-	// makes anysense at all. thinking about maybe making meta data editor to add plists
-	// $parent = dirname($file);
-	// if (!find_fpc_build($parent)) {
-	// 	if (!create_default_settings($parent, 'settings/fpc_settings.json', array())) {
-	// 		die("must have a .fpcbuild to run\n");
-	// 	}
-	// }
-	// $fpcbuild = try_to_load_fpc_build(null, $parent, $file);
-	// run_single_file($file, $fpcbuild);
-	// build_finished(0);
-	run_single_file($file);
-	build_finished(0);
-}
+	case BUILD_MODE_LAZARUS:
+		run_lazarus($project_path, $project_file);
+		build_finished();
+		break;
 
+	case BUILD_MODE_QUICK:
+		run_quick_file($file);
+		break;
+
+	default:
+		# code...
+		break;
+}
 
 ?>

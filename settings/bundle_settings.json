@@ -38,7 +38,7 @@
      **/
 
     "base": {
-      "main": "$project/$(program-file).pas",
+      "program": "$project/$(program-file).pas",
       "product_name": "$product_name",
       "product_path": "$project/$product_name",
       "compiler": {
@@ -81,7 +81,7 @@
 
     "library": {
       "parent": "base",
-      "main": "$project/Library.pas",
+      "program": "$project/Library.pas",
       "product_name": "lib$product_name.a",
       "options": [
         "-Cn"
