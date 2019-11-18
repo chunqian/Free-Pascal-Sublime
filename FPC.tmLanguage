@@ -1034,10 +1034,15 @@
 		</dict>
 		<!-- keywords -->
 		<dict>
-			<key>comment</key>
-			<string>Common keywords</string>
 			<key>match</key>
-			<string>\b(?i:(fixed|constructor|destructor|property|function|procedure|class|object|shl|shr|strict|bitpacked|continue|is|as|break|read|implements|library|real|ansistring|widestring|unicodestring|resourcestring|ansichar|widechar|unicodechar|single|double|pchar|try|finally|except|on|exception|exports|dispose|univ|exit|halt|char|pointer|new|sizeof|forward|uses|const|constref|cycle|var|threadvar|class|object|record|type|implementation|interface|begin|end|integer|boolean|bytebool|wordbool||longbool|longint|byte|shortint|smallint|word|cardinal|longword|int64|qword|variant|and|array|case|div|do|downto|else|file|for|goto|if|in|inherited|label|leave|mod|not|of|or|xor|otherwise|packed|program|public|private|protected|published|repeat|raise|set|string|then|to|until|unit|while|with|absolute|sealed|generic|specialize|out|reference|nested|initialization|finalization))\b</string>
+			<string>\b(?i:(fixed|constructor|destructor|property|function|procedure|class|object|shl|shr|strict|bitpacked|continue|is|as|break|read|implements|library|real|ansistring|widestring|unicodestring|resourcestring|ansichar|widechar|unicodechar|single|double|pchar|try|finally|except|on|exception|exports|dispose|univ|exit|halt|char|pointer|new|sizeof|forward|uses|const|constref|cycle|var|threadvar|class|object|record|type|implementation|interface|begin|end|integer|boolean|bytebool|wordbool||longbool|objcbool|longint|byte|shortint|smallint|word|cardinal|longword|int64|qword|variant|and|array|case|div|do|downto|else|file|for|goto|if|in|inherited|label|leave|mod|not|of|or|xor|otherwise|packed|program|public|private|protected|published|repeat|raise|set|string|then|to|until|unit|while|with|absolute|sealed|generic|specialize|out|reference|nested|initialization|finalization))\b</string>
+			<key>name</key>
+			<string>keyword.control.pascal</string>
+		</dict>
+		<!-- custom keywords -->
+		<dict>
+			<key>match</key>
+			<string>\b(?i:(float))\b</string>
 			<key>name</key>
 			<string>keyword.control.pascal</string>
 		</dict>

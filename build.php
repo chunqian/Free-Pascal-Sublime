@@ -50,12 +50,46 @@ const BUILD_MODE_QUICK = 'quick';					// build with standard settings and output
 const BUILD_MODE_NO_RUN = '';							// build but do not run
 
 // ================================================================================================
+// Makefile
+// ================================================================================================
+
+class Makefile {
+	private $rules = array( 'clean' => array(),
+													'all' => array(),
+													'install' => array()
+												);
+	private $root = '';
+	private $install_rule = null;
+
+	function push(string $rule, string $command): void {
+		$command = str_replace($this->root, '.', $command);
+		printc(ANSI_FORE_YELLOW, $command."\n");
+		$this->rules[$rule][] = $command;
+	}
+
+	function write_to_file(string $path): void {
+		foreach ($this->rules as $name => $commands) {
+			$output .= "$name:\n";
+			foreach ($commands as $command) {
+				$output .= "	$command\n";
+			}
+		}
+		file_put_contents($path, $output);
+	}
+
+	function __construct(string $root) {
+		$this->root = $root;
+	}
+}
+
+// ================================================================================================
 // GLOBALS
 // ================================================================================================
 
 $settings = array();
 $macros = array();
 $enable_ansi_colors = false;
+$shared_makefile = null;
 
 // ================================================================================================
 // UTILITIES
@@ -208,10 +242,11 @@ function ask_dialog(string $message, array $buttons): string {
 	}
 }
 
-function passthru2(string $command, ?int &$exit_code): void {
+function passthru2(string $command, ?int &$exit_code, bool $makefile_eligable = false): void {
 	printc(ANSI_FORE_BLUE, "[$command]\n");
+	if ($makefile_eligable) push_makefile($command);
 	passthru($command, $exit_code);
-	if ($exit_code != 0) fatal("command failed.");
+	if ($exit_code != 0) fatal("command failed ($command).");
 }
 
 function compare_files ($a, $b) {
@@ -243,7 +278,7 @@ function build_finished(int $error_code = 0): void {
 // standard fatal error to exit script
 function fatal(string $error, bool $show_error = true, bool $show_trace = true): void {
 	global $argv;
-	print("FATAL: $error\n");
+	printc(ANSI_BACK_RED, "FATAL: $error\n");
 	// show an error which we can see in the current file
 	if ($argv[1]) {
 		if ($show_error) show_error($argv[1], $error, false);
@@ -485,8 +520,7 @@ function compile_metal ($src, $dest) {
 
 function compile_nib ($src, $dest) {
 	$command = SYSTEM_IBTOOL." --errors --warnings --notices --output-format human-readable-text --compile \"$dest\" \"$src\" --flatten YES";
-	//print("$command\n");
-	passthru($command, $err);
+	passthru2($command, $err, true);
 	if ($err != 0) fatal("failed to compile $src.");
 }
 
@@ -499,6 +533,23 @@ function is_resource_dir($path) {
 	}
 }
 
+function push_makefile(string $command): void {
+	global $shared_makefile;
+	if (!$shared_makefile) return;
+	$shared_makefile->push('all', $command);
+}
+
+function make_dir(string $path): void {
+	push_makefile("mkdir -p $path");
+	@mkdir($path);
+}
+
+
+function move_file(string $binary, string $dest): void {
+	push_makefile("mv -f $binary $dest");
+	@rename($binary, $dest);
+}
+
 function copy_metal($src, $dest) {
 	// copy src .metal to $dest directory .metallib
 	$path_info = pathinfo($src);
@@ -506,7 +557,7 @@ function copy_metal($src, $dest) {
 
 	if (!compare_files($src, $new_dest)) {
 		print("compile metal shader: $src -> $new_dest\n");
-		@mkdir(dirname($dest));
+		make_dir(dirname($dest));
 		compile_metal($src, $new_dest);
 		touch($new_dest, filemtime($src));
 	}
@@ -516,13 +567,13 @@ function copy_nib($src, $dest, $ext) {
 	$path_info = pathinfo($src);
 	$new_dest = dirname($dest)."/".$path_info["filename"].".$ext";
 	if (!compare_files($src, $new_dest)) {
-		@mkdir(dirname($dest));
+		make_dir(dirname($dest));
 		compile_nib($src, $new_dest);
 		touch($new_dest, filemtime($src));
 	}
 }
 
-function copy_file($src, $dest) {
+function copy_file($src, $dest, bool $makefile_eligable = true) {
 	$path_info = pathinfo($src);
 	$ext = $path_info["extension"];
 
@@ -544,19 +595,22 @@ function copy_file($src, $dest) {
 	if (!compare_files($src, $dest)) {
 		//print("copy_file $src to $dest\n");
 		//@mkdir(dirname($dest));
+		// TODO: this doesn't copy file permissions! try to copy untrunc binary and see what happens
 		if (!copy($src, $dest)) fatal("copy resource failed ($src -> $dest).");
 		if (!touch($dest, filemtime($src))) fatal("copy resource failed ($src -> $dest).");
+		if ($makefile_eligable) push_makefile("cp $src $dest");
 	}
 }
 
 function copy_link($src, $dest) {
 	$link = readlink($src);
+	// TODO: how do we add this to makefile?
 	@symlink($link, $dest);
 }
 
 function copy_resources($src, $dest) {
 	if (is_resource_dir($dest)) {
-		@mkdir($dest);
+		make_dir($dest);
 	}
 	if (!is_resource_dir($src)) {
 		copy_file($src, $dest."/".basename($src));
@@ -570,7 +624,7 @@ function copy_resources($src, $dest) {
 					copy_link($path, $file_dest);
 				} elseif (is_resource_dir($path)) {
 					//print("copy directory $path to $file_dest\n");
-					@mkdir($file_dest);
+					make_dir($file_dest);
 					copy_resources($path, $file_dest);
 				} else {
 					copy_file($path, $file_dest);
@@ -599,6 +653,8 @@ function replace_file_macros($file, $macros) {
 }
 
 function require_file($path, $message = "") {
+	// always accept wildcard pattern
+	if (basename($path) == '*') return;
 	if (!file_exists($path)) {
 		if ($message == "") {
 			fatal("File '$path' can't be found.");
@@ -647,22 +703,22 @@ function codesign_bundle ($bundle, $entitlements, $identity, $always = true) {
 			$path = $frameworks."/".$name;
 			$command = "codesign $force -s \"$identity\" \"$path\"";
 			// print("[$command]\n");
-			passthru2($command, $exit_code);
+			passthru2($command, $exit_code, true);
 			if ($exit_code != 0) fatal("codesign failed.");
 		}
 	}
 
 	// codesign bundle
-	$command = "codesign $force --entitlements \"$entitlements\" -s \"$identity\" \"$bundle\"";
-	passthru2($command, $exit_code);
+	// note: add hardened runtime for notarization in Catalina
+	$hardened_runtime_options = "--options=runtime --timestamp";
+	passthru2("codesign $force --deep $hardened_runtime_options --entitlements \"$entitlements\" -s \"$identity\" \"$bundle\"", $exit_code, true);
 
 	// verify 
-	$command = "codesign --verify --deep --strict \"$bundle\"";
-	passthru2($command, $exit_code);
+	passthru2("codesign --verify --deep --strict \"$bundle\"", $exit_code, true);
+	passthru2("codesign -dv --verbose=4 \"$bundle\"", $exit_code, true);	
 
 	// verify gatekeeper
-	$command = "spctl -a -vvvv \"$bundle\"";
-	passthru2($command, $exit_code);
+	passthru2("spctl -a -vvvv \"$bundle\"", $exit_code, true);
 }
 
 // moves executable to /bin directory (as specified in .fpcbuild)
@@ -683,34 +739,58 @@ function move_to_bin(string $exec, array $macros, ?array $fpcbuild): string {
 }
 
 function make_bundle(string $binary, string $bundle, ?array $resource_paths): string {
+	global $shared_makefile;
+
+	print("make bundle $bundle.\n");
+
+	// Bundle Structures:
+	// https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html
 
 	// make bundle
-	@mkdir("$bundle");
-	@mkdir("$bundle/Contents");
-	@mkdir("$bundle/Contents/MacOS");
-	@mkdir("$bundle/Contents/Frameworks");
-	@mkdir("$bundle/Contents/Plugins");
-	@mkdir("$bundle/Contents/Resources");
-	@mkdir("$bundle/Contents/SharedSupport");
+	make_dir("$bundle");
+	make_dir("$bundle/Contents");
+	make_dir("$bundle/Contents/MacOS");
+	make_dir("$bundle/Contents/Frameworks");
+	make_dir("$bundle/Contents/Resources");
 
+	// TODO: -o should move this directly into the bundle! we're doing it backwards still...
+	// "product_path": "$project/$product_name" should be overriden for bundle targets
 	// move binary to bundle
 	$dest = "$bundle/Contents/MacOS/".basename($binary);
-	// print("move $binary to $dest\n");
-	@rename($binary, $dest);
+	move_file($binary, $dest);
 	$binary = $dest;
 
 	// copy info.plist
 	$path = get_setting(SETTING_COMMON, SETTING_COMMON_INFO_PLIST, SETTING_IS_PATH);
 	$dest = "$bundle/Contents/Info.plist";
 	increment_build($path);
-	copy_file($path, $dest);
-	// print_r(get_setting(SETTING_MACROS));
+	copy_file($path, $dest, false);
 	replace_file_macros($dest, get_setting(SETTING_MACROS));
+
+	// if makefiles are enabled then copy the output info.plist
+	// so it can be copied into the bundle later
+	if ($shared_makefile) {
+		$plist_name = basename($path).'.out';
+		$plist_out = dirname($path).'/'.$plist_name;
+		@copy($dest, $plist_out);
+		$shared_makefile->push('all', "cp -f $plist_out $dest");
+	}
 
 	// copy resources
 	if ($resource_paths) {
 		foreach ($resource_paths as $source => $dest) {
-			copy_resources($source, $dest);
+			// match all files in directory
+			if (basename($source) == '*') {
+				$dir = dirname($source);
+				$names = scandir($dir);
+				foreach ($names as $name) {
+					if ($name[0] == '.') continue;
+					copy_resources("$dir/$name", $dest);
+				}
+			} else {
+				copy_resources($source, $dest);
+			}
+
 		}
 	}
 	
@@ -1117,9 +1197,8 @@ function run_lazarus(string $project_path, ?string $project_file): void {
 		$json = try_to_load_fpc_build(null, $dir);
 	}
 
-
 	if ($json) {		
-
+		
 		// $json['project'] = str_replace("\$dir", $dir, $json['project']);
 		// $json['binary'] = str_replace("\$dir", $dir, $json['binary']);
 
@@ -1200,20 +1279,18 @@ function run_build_script(string $file, string $project_file, array $fpcbuild) {
 function run_project(string $file, string $project_file, ?array $fpcbuild, ?string $build_variant, bool $clean_build = false): void {
 	global $macros;
 	global $settings;
+	global $shared_makefile;
 
 	$project = dirname($project_file);
 
 	require_file($project, "Missing project '$project'");
 	print("Load project '$project'\n");
 
-	// $target = find_target($project);
-
-	$user_path = "/Users/".exec("/usr/bin/whoami");
 	$run_after_build = true;
 
 	// setup default macros
 	$macros = array(
-		'~' => $user_path,
+		'~' => $_ENV['HOME'],
 		'$project' => $project,
 		'$parent' => dirname($project),
 		'$sdk_path' => dirname(find_sdk_path())
@@ -1233,9 +1310,11 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 	}
 
 	$settings = load_settings($fpcbuild);
-	// print_r($settings);
-	// die;
 	$macros = array_merge($macros, $settings["macros"]);
+
+	// enable the makefiles
+	if ($fpcbuild['makefile'])
+		$shared_makefile = new Makefile($project);
 
 	// common
 	$target_name = get_setting(SETTING_COMMON, SETTING_COMMON_TARGET);
@@ -1294,20 +1373,19 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 	// clean output directory
 	if ($clean_build && file_exists($output)) {
 		print("Cleaning output directory at '$output'...\n");
-		// rrmdir($output);
+		// TODO: this isn't portable! use mv -f source.time-stamp ~/.Trash
 		exec("trash $output");
 	}
 
 	// make output directory
-	@mkdir($output);
+	make_dir($output);
 
-	// build
-	$command = <<<command
-$fpc "$program" $options $source_paths $framework_paths $library_paths $include_paths
-command;
+	// build command
+	$command = "$fpc \"$program\" $options $source_paths $framework_paths $library_paths $include_paths";
 	$command = trim($command);
 
 	// run command
+	push_makefile($command);
 	$exit_code = run_command($command);
 
 	if ($exit_code == 0) {
@@ -1319,15 +1397,23 @@ command;
 			fatal("compiled binary doesn't exist '$binary'");
 		}
 
-		// move dSYM to output directory
+		// move .dSYM to output directory
 		$dsym = dirname($product_path).'/'.basename_no_ext($product_path).".dSYM";
 		if (file_exists($dsym)) {
 			$dest = $output."/".basename($dsym);
 			rmovedir($dsym, $dest);
 		}
 
-		// make the actual bundle if the target is of type 'bundle'
-		if (file_exists($bundle)) $binary = make_bundle($binary, $bundle, $resource_paths);
+		// make the package if a bundle path was specificed
+		if ($bundle) $binary = make_bundle($binary, $bundle, $resource_paths);
+
+		if ($shared_makefile) {
+			$shared_makefile->push('clean', "rm -r $output");
+			$shared_makefile->push('clean', "rm -r $bundle");
+
+			$shared_makefile->push('install', "cp $bundle ~/Applications/".basename($bundle));
+			$shared_makefile->write_to_file("$project/Makefile");
+		}
 
 		// run the executable
 		if ($run_after_build) {

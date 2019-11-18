@@ -7,16 +7,16 @@ uses
 	CocoaAll;
 
 type
-	TAppController = objcclass(NSObject)
-	public
-		procedure applicationDidFinishLaunching(notification : NSNotification); message 'applicationDidFinishLaunching:';
-	private
-   		window: NSWindow;
+	TAppDelegate = objcclass(NSObject, NSApplicationDelegateProtocol)
+    private
+      window: NSWindow;
+  	public
+  		procedure applicationDidFinishLaunching(notification: NSNotification); message 'applicationDidFinishLaunching:';
  	end;
 
 implementation
 
-procedure TAppController.applicationDidFinishLaunching(notification : NSNotification);
+procedure TAppDelegate.applicationDidFinishLaunching(notification : NSNotification);
 begin
 	// Insert code here to initialize your application 
 end;

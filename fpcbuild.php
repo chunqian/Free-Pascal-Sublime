@@ -60,9 +60,13 @@ for ($i=1; $i < count($argv); $i++) {
 				$fpcbuild['configuration'] = $cmd['config'];
 			if ($cmd['target'])
 				$fpcbuild['target'] = $cmd['target'];
-			if ($cmd['codesign'])
-				$fpcbuild['codesign_enabled'] = true;
 
+			// override target based settings
+			if ($cmd['codesign'])
+				$fpcbuild['targets'][$fpcbuild['target']]['codesign_enabled'] = true;
+
+			// print_r($fpcbuild);
+			// die;
 			$clean_build = ($cmd['clean'] ? true : false);
 			$build_variant = ($cmd['run'] ? BUILD_MODE_DEFAULT : BUILD_MODE_NO_RUN);
 
