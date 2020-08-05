@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+case ${1:variable} of
+	${2:value}:
+		$0
+end;
+]]></content>
+	<description>case .. of</description>
+    <tabTrigger>case</tabTrigger>
+    <scope>meta.scope.code.pascal</scope> 
+</snippet>

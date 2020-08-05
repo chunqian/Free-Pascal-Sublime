@@ -1,0 +1,1486 @@
+%YAML 1.2
+---
+
+# syntax definitions:
+# https://www.sublimetext.com/docs/syntax.html#ver-dev
+# scope naming conventions:
+# https://www.sublimetext.com/docs/scope_naming.html
+# https://macromates.com/manual/en/language_grammars
+# selectors:
+# https://www.sublimetext.com/docs/selectors.html
+
+# metadata (tmPreferences):
+# https://docs.sublimetext.io/reference/metadata.html#example
+# symbols:
+# https://docs.sublimetext.io/reference/symbols.html#settings-subelements
+
+# free pascal language reference:
+# https://freepascal.org/docs-html/ref/ref.html
+
+name: Free Pascal Compiler
+author: Ryan Joseph
+file_extensions: [pas,pp,p,inc,lpr]
+scope: source.pascal
+
+variables:
+
+  # overloads
+  operators_word: 'in|is|as|shl|shr|div|mod|not|and|or|xor'
+  operators_symbol: '\*\*|>=|<=|<>|><|:=|\+|\*|\-|>|<|=|/'
+  operators_code: '{{operators_word}}|{{operators_symbol}}'
+  operators_overload: 'explicit|implicit|initialize|finalize|enumerator|copy|move|addref'
+  operators_all: '{{operators_word}}|{{operators_symbol}}|{{operators_overload}}'
+
+  # compiler types
+  types_ordinal: 'integer|shortint|smallint|longint|longword|int64|byte|word|cardinal|qword|boolean|bytebool|wordbool|longbool|qwordbool|char|boolean16|boolean32|boolean64|variant'
+  types_real: 'real|single|double|extended|comp|currency'
+  types_character: 'string|shortstring|ansistring|widestring|unicodestring|resourcestring|ansichar|widechar|unicodechar|pchar'
+  types_other: 'file|pointer|array|fixed'
+  types_compiler: '{{types_ordinal}}|{{types_real}}|{{types_character}}|{{types_other}}'
+
+  # compiler instrinsics
+  # from compiler/psystem.pas
+  function_compiler_instrinsics: 'concat|write|writeln|writestr|assigned|read|readln|readstr|ofs|sizeof|bitsizeof|typeof|low|high|slice|seg|ord|pred|succ|exclude|include|pack|unpack|break|exit|continue|leave|cycle|dec|inc|str|assert|val|addr|faraddr|typeinfo|setlength|copy|initialize|finalize|length|new|dispose|get_frame|unaligned|aligned|volatile|objcselector|objcencode|default|setstring|insert|delete|gettypekind|ismanagedtype|isconstvalue|volatile'
+
+  # the following keywords can interrupt a code section
+  section_interrupts: 'procedure|function|class|generic|operator|constructor|destructor|property'
+  section_begins: 'begin|initialization|finalization|implementation'
+
+  visibility_section_keywords: '(?=\b(?i:(public|published|protected|private)+)\b)'
+  data_section_keywords: '(?=\b(?i:(const|type|var|label|{{section_interrupts}})+)\b)'
+  code_section_keywords: '(?=\b(?i:({{section_begins}})+)\b)'
+
+  # procedural type (procvars) modifiers
+  # https://freepascal.org/docs-html/ref/refse17.html#x44-620003.6
+  procedural_type_modifiers: '(?i:(of\s+object)|((is)\s+(nested)))'
+
+  # reserved words which can not be used for identifier names
+  # https://freepascal.org/docs-html/ref/refse3.html#x11-100001.3
+  reserved_words: 'absolute|and|array|asm|begin|case|const|constructor|destructor|div|do|downto|else|end|file|for|function|goto|if|implementation|in|inherited|inline|interface|label|mod|nil|not|object|of|operator|or|packed|procedure|program|record|reintroduce|repeat|self|set|shl|shr|string|then|to|type|unit|until|uses|var|while|with|as|class|dispinterface|except|exports|finalization|finally|initialization|inline|is|library|on|out|packed|property|raise|resourcestring|threadvar'
+
+contexts:
+
+  ##############################################################################
+  # mains
+  ##############################################################################
+
+  main:
+    - meta_scope: meta.scope.file.pascal
+    - include: section_file
+
+  pop:
+    - match: ''
+      pop: true
+
+  type_identifiers:
+    - match: \b(?i:({{types_compiler}}))\b
+      scope: support.type.system.pascal
+    - match: ((\w+)(\.)(\w+))
+      captures:
+        2: support.class.pascal
+        3: punctuation.separator.pascal
+        4: support.type.pascal
+    - match: \b(\w+)\b
+      scope: support.type.pascal
+
+  ##############################################################################
+  # prototype
+  ##############################################################################
+
+  prototype:
+    - include: comments
+    - include: strings
+    - include: numbers
+    - include: constants
+
+  ##############################################################################
+  # comments
+  ##############################################################################
+
+  comments:
+    - meta_include_prototype: false
+    - match: \(\*
+      scope: punctuation.comment.pascal
+      push: 
+        - include: comment_url
+        - meta_scope: comment.long.pascal
+        - match: \*\)
+          scope: punctuation.comment.pascal
+          pop: true
+    - match: \{
+      scope: punctuation.comment.pascal
+      push: 
+        - include: compiler_directive
+        - include: comment_todo
+        - include: comment_url
+        - meta_scope: comment.block.pascal
+        - match: \}
+          scope: punctuation.comment.pascal
+          pop: true
+    - match: //
+      scope: punctuation.comment.pascal
+      push: 
+        - include: comment_todo
+        - include: comment_url
+        - meta_scope: comment.line.pascal
+        - match: $
+          pop: true
+
+  compiler_directive_value:
+    - match: \s*(\w+)(\+|-)*
+      captures:
+        1: constant.language.directive.pascal
+        2: keyword.operator.pascal
+    - match: \}
+      scope: punctuation.comment.pascal
+      pop: 2
+
+  compiler_directive:
+    - match: (?i:(\$define))\s+(\w+)\s*(:=)([^}]+)
+      captures:
+        1: keyword.other.directive.pascal
+        2: constant.language.directive.pascal
+        3: keyword.operator.pascal
+        4: comment.directive.pascal
+      push:
+        - meta_scope: meta.directive.mode.pascal
+        - include: compiler_directive_value
+    - match: (?<={)\s*\$(?i:mode)\s+
+      scope: keyword.other.directive.pascal
+      push:
+        - meta_scope: meta.directive.mode.pascal
+        - include: compiler_directive_value
+    - match: (?<={)\$(?i:modeswitch)\s+
+      scope: keyword.other.directive.pascal
+      push:
+        - meta_scope: meta.directive.modeswitch.pascal
+        - include: compiler_directive_value
+    - match: (?<={)\$(?i:interfaces)\s+
+      scope: keyword.other.directive.pascal
+      push:
+        - meta_scope: meta.directive.interfaces.pascal
+        - include: compiler_directive_value
+    - match: (?<={)(\$\w+)\s+([^}]+)
+      captures:
+        1: keyword.other.directive.pascal
+        2: string.directive.pascal
+    - match: (?<={)(\$\w+)(\+|-)*
+      captures:
+        1: keyword.other.directive.pascal
+        2: keyword.operator.pascal
+
+  comment_todo:
+    - match: ((\b(?i:note|todo|important|warning|fixme)\b)\s*(\(\w+\))*:)
+      captures:
+        2: keyword.other.todo.pascal
+
+  comment_url:
+    - match: ((http(s)*|ftp)+://[^ ]+)
+      captures:
+        1: markup.underline.link
+
+  ##############################################################################
+  # strings
+  ##############################################################################
+
+  strings:
+    - meta_include_prototype: false
+    - match: \'
+      scope: punctuation.string.pascal
+      push: 
+        - meta_scope: string.quoted.single.pascal
+        - match: \'
+          scope: punctuation.string.pascal
+          pop: true
+
+  ##############################################################################
+  # numbers
+  ##############################################################################
+
+  # https://freepascal.org/docs-html/ref/refse6.html#x17-160001.6
+
+  numbers:
+    - include: number_hex
+    - include: number_formatted
+    - include: number_scaled
+    - include: number_digit
+
+  number_digit:
+    - match: \b(\-|\+)*[0-9]+(\.[0-9]+)*\b
+      scope: constant.numeric.digit.pascal
+
+  number_hex:
+    - match: \$[0-9A-Fa-f]+
+      scope: constant.numeric.hex.pascal
+
+  number_formatted:
+    - match: (&|%)+([0-9]+)
+      scope: constant.numeric.formatted.pascal
+
+  number_scaled:
+    - match: ([0-9]+(\.[0-9]+)*)*(e|E)+(-|\+)+[0-9]+
+      scope: constant.numeric.scaled.pascal
+
+
+  ##############################################################################
+  # punctuation
+  ##############################################################################
+
+  punctuation_code:
+    - match: (\(|\)|\[|\]|<|>)
+      scope: punctuation.brackets.pascal
+    - match: (:=|>=|<=|<>|><|\+|\*|\-|>|<|=|,|\.)
+      scope: punctuation.operator.pascal
+    # - match: ;
+    #   scope: punctuation.terminator.pascal
+
+  punctuation_function_call:
+    - match: (\[|\])
+      scope: punctuation.brackets.pascal
+    - match: (>=|<=|<>|><|\+|\*|\-|>|<|=|,|\.)
+      scope: punctuation.operator.pascal
+
+  punctuation_parameters:
+    - match: (:|;|,|=)
+      scope: punctuation.pascal
+
+  ##############################################################################
+  # constants
+  ##############################################################################
+
+  constants:
+    - include: constants_language
+    - include: constants_address_of
+    - include: constants_pointer_dereference
+    - include: constants_ascii
+
+  constants_language:
+    - match: \b(?i:(true|false|nil))\b
+      scope: constant.language.pascal
+
+  constants_address_of:
+    - match: \@
+      scope: constant.other.pascal keyword.operator.address-of.pascal
+
+  constants_pointer_dereference:
+    - match: \^
+      scope: constant.other.pascal keyword.operator.deref.pascal
+
+  constants_ascii:
+    - match: \#\d+
+      scope: constant.character.pascal
+
+  ##############################################################################
+  # keywords
+  ##############################################################################
+
+  # https://freepascal.org/docs-html/ref/refsu4.html#x26-260003.1.1
+  # https://wiki.freepascal.org/Variables_and_Data_Types
+
+  keywords_types:
+    - match: \b(?i:({{types_compiler}}))\b
+      scope: support.type.system.pascal
+
+  keywords_parameter_modifiers:
+    - match: \b(?i:(var|out|const|constref|univ))\b
+      scope: storage.modifier.pascal
+
+  keywords_code:
+    - match: \b(?i:(continue|break|on|exception|dispose|exit|halt|new|case|do|downto|else|for|goto|if|inherited|self|result|leave|otherwise|raise|then|to|of|in|until|while|with))\b
+      scope: keyword.control.pascal
+
+  keywords_operators:
+    - match: \b(?i:({{operators_word}}))\b
+      scope: keyword.operator.word.pascal
+
+  # https://freepascal.org/docs-html/ref/refse99.html#x190-21200014.9
+  # A function or procedure declaration can contain modifiers. Here we list the various possibilities:
+
+  keywords_modifiers:
+    - match: \b(?i:(alias|cdecl|cppdecl|export|inline|noinline|interrupt|iocheck|local|noreturn|nostackframe|overload|pascal|public|register|safecall|saveregisters|softfloat|stdcall|varargs|winapi|cblock|virtual|override|static|reintroduce|cvar|external))\b
+      scope: storage.modifier.pascal
+    - match: 'deprecated|experimental'
+      scope: storage.modifier.pascal
+
+  keywords_statements:
+    - include: keywords_types
+    - include: keywords_code
+    - include: keywords_operators
+
+  ##############################################################################
+  # abstract records
+  ##############################################################################
+
+  abstract_record_members:
+    - include: keywords_types
+    - include: keywords_modifiers
+
+  ##############################################################################
+  # records
+  ##############################################################################
+
+  advanced_record_members:
+    # default to var declarations
+    - include: var_declaration_list
+
+    - match: \b(?i:(type))\b
+      scope: keyword.control.pascal
+      push: section_type
+    - match: \b(?i:(const))\b
+      scope: keyword.control.pascal
+      push: section_const
+    - match: (?i:\b(class\s+)*\b(var)\b)
+      scope: keyword.control.pascal
+      push: section_var
+    - match: \b(?i:(public|published|protected|private)+)\b
+      scope: keyword.control.pascal
+
+  type_record:
+    - match: (\w+)\s*=\s*(?i:(\b(packed|bitpacked)\b\s+)*\b(?i:(record))\b)
+      captures:
+        1: support.type.entity.pascal entity.name.struct.pascal
+        2: keyword.control.pascal
+        4: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.record.pascal
+        - match: \b(?i:(end))\b\s*;
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: object_members
+        - include: variant_record
+
+  variant_record:
+    - match: \b(?i:(case))\b
+      scope: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.record.variant.pascal
+        - match: \b(?i:(of))\b
+          scope: keyword.control.pascal
+          push:
+            # TODO: handle 1: ...; cases but we need a complete
+            # expression syntax before this can work
+            - include: expressions
+            - match: (?=\b(?i:(end))\b\s*;)
+              pop: 2
+        - include: expressions
+
+
+  ##############################################################################
+  # objects
+  ##############################################################################
+
+  object_members:
+    - include: advanced_record_members
+    - include: object_methods
+    - include: abstract_record_members
+
+  inheritance_list:
+    - match: (\w+)
+      scope: support.type.class.pascal
+
+  type_object:
+    - match: (\w+)\s*=\s*\b(?i:(object))\b
+      captures:
+        1: support.type.entity.pascal entity.name.class.object.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.object.pascal
+        - match: \(
+          scope: punctuation.bracket.pascal
+          push:
+            - include: inheritance_list
+            - meta_scope: meta.scope.object.inherits.pascal
+            - match: \)
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: \b(?i:(end))\b\s*;
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: object_members
+
+  ##############################################################################
+  # interfaces
+  ##############################################################################
+
+  # https://freepascal.org/docs-html/ref/refse43.html#x96-1180007.1
+
+  interface_members:
+    - include: interface_methods
+
+  type_interface:
+    - match: (\w+)\s*=\s*\b(?i:(interface))\b
+      captures:
+        1: support.type.entity.pascal entity.name.interface.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.interface.pascal
+        - match: \(
+          scope: punctuation.bracket.pascal
+          push:
+            - include: inheritance_list
+            - meta_scope: meta.scope.interface.inherits.pascal
+            - match: \)
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: \[
+          scope: punctuation.bracket.pascal
+          push:
+            - meta_scope: meta.scope.interface.guid.pascal
+            - match: \]
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: \b(?i:(end))\b\s*;
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: interface_members
+
+
+  ##############################################################################
+  # helpers
+  ##############################################################################
+
+  # https://freepascal.org/docs-html/ref/refse63.html#x123-14500010.1
+
+  helper_members:
+    - include: interface_methods
+
+  helper_inheritance:
+    - match: \(
+      scope: punctuation.bracket.pascal
+      push:
+        - include: inheritance_list
+        - meta_scope: meta.scope.helper.inherits.pascal
+        - match: \)
+          scope: punctuation.bracket.pascal
+          pop: true
+
+  helper_end:
+    - match: \b(?i:(end))\b\s*;
+      captures:
+        1: keyword.control.pascal
+      pop: true
+    - include: helper_members
+
+  type_helper_class:
+    - match: (?i:(\w+)\s*=\s*(class\s+helper))
+      captures:
+        1: support.type.entity.pascal entity.name.struct.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.helper.pascal
+        - include: helper_inheritance
+        - match: (?i:\s+(for)\s+(\w+))
+          captures:
+            1: keyword.control.pascal
+            2: support.type.class.pascal
+        - include: helper_end
+
+  type_helper_record:
+    - match: (?i:(\w+)\s*=\s*(record\s+helper))
+      captures:
+        1: support.type.entity.pascal entity.name.struct.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.helper.pascal
+        - include: helper_inheritance
+        - match: (?i:\s+(for)\s+(\w+))
+          captures:
+            1: keyword.control.pascal
+            2: support.type.class.pascal
+        - include: helper_end
+
+  type_helper_type:
+    - match: (?i:(\w+)\s*=\s*(type\s+helper))
+      captures:
+        1: support.type.entity.pascal entity.name.struct.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.helper.pascal
+        - include: helper_inheritance
+        - match: (?i:\s+(for)\s+(\w+))
+          captures:
+            1: keyword.control.pascal
+            2: storage.type.pascal
+        - include: helper_end
+
+
+  ##############################################################################
+  # classes
+  ##############################################################################
+
+  class_members:
+    - include: advanced_record_members
+    - include: class_methods
+    - include: abstract_record_members
+
+  type_class_reference:
+    - match: (\w+)\s*=\s*\b(?i:(class\s+of))\b\s*(?=\w+\s*;)
+      captures:
+        1: support.type.entity.pascal entity.name.type.class-reference.pascal
+        2: keyword.control.pascal
+      push:
+        - include: type_identifiers
+        - match: ;
+          pop: true
+
+  type_class_forward:
+    - match: (\w+)\s*=\s*\b(?i:(class))\b\s*;
+      captures:
+        1: support.type.entity.pascal entity.name.class-forward.pascal
+        2: keyword.control.pascal
+
+  type_class:
+    - match: (\w+)\s*=\s*\b(?i:(packed))*\b\s*\b(?i:(class))\b\s*\b(?i:(sealed|abstract)+)*\b
+      captures:
+        1: support.type.entity.pascal entity.name.class.pascal
+        2: keyword.control.pascal
+        3: keyword.control.pascal
+        4: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.class.pascal
+        - match: \(
+          scope: punctuation.bracket.pascal
+          push:
+            - include: inheritance_list
+            - meta_scope: meta.scope.class.inherits.pascal
+            # classes may have no body
+            - match: (\))\s*;
+              captures:
+                1: punctuation.bracket.pascal
+              pop: 2
+            - match: \)
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: \b(?i:(end))\b\s*;
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: class_members
+
+
+  ##############################################################################
+  # objective-c
+  ##############################################################################
+
+  objcclass_methods:
+    - include: class_methods
+    - match: \b(?i:(message))\b\s*(\'.*\')
+      captures:
+        1: keyword.control.pascal
+        2: string.quoted.single.pascal
+
+  objcclass_members:
+    - include: advanced_record_members
+    - include: objcclass_methods
+    - include: abstract_record_members
+
+  objccategory_members:
+    - include: objcclass_methods
+
+  objcprotocol_members:
+    - include: objcclass_methods
+    - match: \b(?i:(required|optional)+)\b
+      scope: keyword.control.pascal
+
+  type_objectivec_classes:
+    - include: type_objcclass_forward
+    - include: type_objcclass_external
+    - include: type_objcclass
+    - include: type_objccategory_external
+    - include: type_objccategory
+    - include: type_objcprotocol_external
+    - include: type_objcprotocol
+
+  type_objcclass_forward:
+    - match: (\w+)\s*=\s*(?i:(\b(objcclass|objcprotocol|objccategory)\b|(\s+(external)\s*((name)\s*(\'.*\'))*))+)\s*;
+      captures:
+        1: support.type.entity.pascal entity.name.class-forward.pascal
+        3: keyword.control.pascal
+        5: keyword.control.pascal
+        7: keyword.control.pascal
+        8: string.quoted.single.pascal
+
+  objcstruct_body:
+    - match: \(
+      scope: punctuation.bracket.pascal
+      push:
+        - include: inheritance_list
+        - meta_scope: meta.scope.objcclass.inherits.pascal
+        - match: \)
+          scope: punctuation.bracket.pascal
+          pop: true
+    - match: \b(?i:(end))\b\s*;
+      captures:
+        1: keyword.control.pascal
+      pop: true
+
+  type_objcclass:
+    - match: (\w+)\s*=\s*\b(?i:(objcclass))\b
+      captures:
+        1: support.type.entity.pascal entity.name.class.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.objcclass.pascal
+        - include: objcstruct_body
+        - include: objcclass_members
+
+  type_objcclass_external:
+    - match: (\w+)\s*=\s*(?i:(objcclass))\s+((external)\s*((name)\s*(\'.*\'))*)
+      captures:
+        1: support.type.entity.pascal entity.name.class.pascal
+        2: keyword.control.pascal
+        4: keyword.control.pascal
+        6: keyword.control.pascal
+        7: string.quoted.single.pascal
+      push:
+        - meta_scope: meta.scope.objcclass.external.pascal
+        - include: objcstruct_body
+        - include: objcclass_members
+
+  type_objccategory:
+    - match: (\w+)\s*=\s*\b(?i:(objccategory))\b
+      captures:
+        1: support.type.entity.pascal entity.name.class.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.objccategory.pascal
+        - include: objcstruct_body
+        - include: objccategory_members
+
+  type_objccategory_external:
+    - match: (\w+)\s*=\s*(?i:(objccategory))\s+((external)\s*((name)\s*(\'.*\'))*)
+      captures:
+        1: support.type.entity.pascal entity.name.class.pascal
+        2: keyword.control.pascal
+        4: keyword.control.pascal
+        6: keyword.control.pascal
+        7: string.quoted.single.pascal
+      push:
+        - meta_scope: meta.scope.objccategory.external.pascal
+        - include: objcstruct_body
+        - include: objccategory_members
+
+  type_objcprotocol_external:
+    - match: (\w+)\s*=\s*(?i:(objcprotocol))\s+((external)\s*((name)\s*(\'.*\'))*)
+      captures:
+        1: support.type.entity.pascal entity.name.class.pascal
+        2: keyword.control.pascal
+        4: keyword.control.pascal
+        6: keyword.control.pascal
+        7: string.quoted.single.pascal
+      push:
+        - meta_scope: meta.scope.objcprotocol.external.pascal
+        - include: objcstruct_body
+        - include: objcprotocol_members
+
+  type_objcprotocol:
+    - match: (\w+)\s*=\s*\b(?i:(objcprotocol))\b
+      captures:
+        1: support.type.entity.pascal entity.name.class.pascal
+        2: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.objcprotocol.pascal
+        - include: objcstruct_body
+        - include: objcprotocol_members
+
+  ##############################################################################
+  # type declarations
+  ##############################################################################
+
+  type_declarations:
+    - include: type_helper_class
+    - include: type_helper_record
+    - include: type_helper_type
+    - include: type_generic
+    - include: type_record
+    - include: type_object
+    - include: type_class_reference
+    - include: type_class_forward
+    - include: type_class
+    - include: type_interface
+    - include: type_objectivec_classes
+    - include: type_generic_declaration
+    - include: type_any_declaration
+    - match: '{{data_section_keywords}}'
+      pop: true
+    - match: '{{code_section_keywords}}'
+      pop: true
+    - match: '{{visibility_section_keywords}}'
+      pop: true
+    - include: data_sections
+
+  type_generic_declaration:
+    - match: (generic\s+)*(\w+)\s*(<)
+      captures:
+        1: keyword.control.pascal
+        2: support.type.entity.pascal entity.name.type.generic.pascal
+        3: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.generic.parameters.pascal
+        - include: generic_parameter_list
+        - match: '>'
+          scope: punctuation.bracket.pascal
+          pop: true
+    - match: =
+      push:
+        - meta_scope: meta.scope.generic.type.pascal
+        - include: type_anonymous_definitions
+        - match: ;
+          pop: true
+
+  type_default_value:
+    - match: =
+      scope: punctuation.assignment.pascal
+      push:
+        - include: const_expression
+        - match: (?=;)
+          pop: true
+
+  type_anonymous_definitions:
+    - include: type_anonymous_procedure
+    - include: type_anonymous_function
+    - include: type_anonymous_set
+    - include: type_anonymous_static_array
+    - include: type_anonymous_dynamic_array
+    - include: type_anonymous_enumeration
+    - include: type_anonymous_specialization
+    - include: type_anonymous_record
+    - include: type_anonymous_class
+    - include: type_anonymous_object
+    - include: type_anonymous_string
+    - include: type_anonymous_alias
+    - include: type_default_value
+
+  type_anonymous_alias:
+    - include: type_identifiers
+
+  type_anonymous_function:
+    - match: (?i:(reference\s+to\s+))*(?i:(function))
+      captures:
+        1: keyword.control.pascal
+        2: keyword.control.pascal
+      push:
+        - match: \(
+          scope: punctuation.bracket.pascal
+          push:
+            - meta_scope: meta.scope.function.parameters.pascal
+            - include: function_parameters
+            - match: \)
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: :\s*(?=\w+)
+          push:
+            - match: ({{procedural_type_modifiers}})
+              captures:
+                1: storage.modifier.pascal
+            - include: type_identifiers
+            - match: (?=;)
+              pop: true
+          pop: true
+
+  type_anonymous_procedure:
+    - match: (?i:(reference\s+to\s+))*(?i:(procedure))
+      captures:
+        1: keyword.control.pascal
+        2: keyword.control.pascal
+      push:
+        - match: \(
+          scope: punctuation.bracket.pascal
+          push:
+            - include: function_parameters
+            - meta_scope: meta.scope.function.parameters.pascal
+            - match: \)
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: ({{procedural_type_modifiers}})*(?=;)
+          captures:
+            1: storage.modifier.pascal
+          pop: true
+
+  type_anonymous_set:
+    - match: (?i:(set\s+of\s+))(?=\w+)
+      scope: keyword.control.pascal
+      push:
+        - include: type_identifiers
+        - include: pop
+
+  type_anonymous_dynamic_array:
+    - match: ((?i:(array\s+of))\s+)+(?=\w+)
+      scope: keyword.control.pascal
+      push:
+        - include: type_identifiers
+        - include: pop
+
+  type_anonymous_static_array:
+    - match: (?i:(array))+\s*(\[)
+      captures:
+        1: keyword.control.pascal
+        2: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.array.pascal
+        - match: (\])\s*(?i:(of))\s+(?=\w+)
+          captures:
+            1: punctuation.bracket.pascal
+            2: keyword.control.pascal
+          push:
+            - include: type_identifiers
+            - match: ''
+              pop: 2
+
+  type_anonymous_string:
+    - match: (?i:(string))+\s*(\[)
+      captures:
+        1: keyword.control.pascal
+        2: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.string-elements.pascal
+        - include: expressions
+        - match: \]
+          scope: punctuation.bracket.pascal
+          pop: true
+
+  type_anonymous_enumeration:
+    - match: \(
+      scope: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.enumeration.pascal
+        - include: type_enumeration_list
+        - match: \)
+          scope: punctuation.bracket.pascal
+          pop: true
+
+  type_anonymous_specialization:
+    - match: (specialize\s+)*(\w+)\s*(<)
+      captures:
+        1: keyword.control.pascal
+        2: support.type.specialization.pascal
+        3: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.generic.specialization.pascal
+        - include: generic_specialization_list
+        - match: '>'
+          scope: punctuation.bracket.pascal
+          pop: true
+
+  type_anonymous_record:
+    - match: (?i:(\b(packed|bitpacked)\b\s+)*\b(?i:(record))\b)
+      captures:
+        1: keyword.control.pascal
+        3: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.record.pascal
+        - match: \b(?i:(end))\b
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: object_members
+        - include: variant_record
+
+  type_anonymous_class:
+    - match: (?i:(\b(class)\b|(\s+(?i:(abstract|sealed)+)))+)
+      captures:
+        2: keyword.control.pascal
+        3: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.class.pascal
+        - match: \(
+          scope: punctuation.bracket.pascal
+          push:
+            - include: inheritance_list
+            - meta_scope: meta.scope.class.inherits.pascal
+            - match: \)
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: \b(?i:(end))\b
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: class_members
+
+  type_anonymous_object:
+    - match: \b(?i:(object))\b
+      captures:
+        1: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.struct.pascal meta.scope.object.pascal
+        - match: \(
+          scope: punctuation.bracket.pascal
+          push:
+            - include: inheritance_list
+            - meta_scope: meta.scope.object.inherits.pascal
+            - match: \)
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: \b(?i:(end))\b
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: object_members
+
+  # https://freepascal.org/docs-html/ref/refse17.html#x44-620003.6
+  # Free Pascal has support for procedural types, although it differs a little from the Turbo Pascal or Delphi implementation of them. The type declaration remains the same, as can be seen in the following syntax diagram:
+
+  # "reference to" syntax for cblocks support
+  # https://wiki.freepascal.org/FPC_New_Features_3.2.0#Support_for_interfacing_with_C_blocks_functionality
+
+  type_any_declaration:
+    - match: (?!({{reserved_words}})+\b)\b(\w+)\s*(=)
+      captures:
+        2: support.type.entity.pascal entity.name.type.pascal
+        3: punctuation.pascal
+      push:
+        - meta_scope: meta.scope.type.pascal
+        - include: type_anonymous_definitions
+        - match: ;
+          pop: true
+
+  type_enumeration_list:
+    - match: \b(\w+)\b(\s*(=)\s*(\d+))*
+      captures:
+        1: support.type.entity.pascal entity.name.enum.pascal
+        3: punctuation.pascal
+        4: constant.numeric.pascal
+
+  ##############################################################################
+  # var declarations
+  ##############################################################################
+
+  var_declarations:
+    - include: var_declaration_list
+    - match: '{{data_section_keywords}}'
+      pop: true
+    - match: '{{code_section_keywords}}'
+      pop: true
+    - match: '{{visibility_section_keywords}}'
+      pop: true
+    - include: data_sections
+
+  var_declaration_list:
+    - match: (\w+)\s*(,)\s*
+      captures:
+        1: variable.identifier.pascal
+        2: punctuation.separator.pascal
+    - match: '(\w+)\s*(:)\s*'
+      captures:
+        1: variable.identifier.pascal
+        2: punctuation.separator.pascal
+      push:
+        - meta_scope: meta.scope.var.type.pascal
+        - include: type_anonymous_definitions
+        - match: ;
+          pop: true
+
+  ##############################################################################
+  # const declarations
+  ##############################################################################
+
+  const_declarations:
+    - include: const_typed_any
+    - include: const_any_type
+    - match: '{{data_section_keywords}}'
+      pop: true
+    - match: '{{code_section_keywords}}'
+      pop: true
+    - match: '{{visibility_section_keywords}}'
+      pop: true
+    - include: data_sections
+
+  const_expression:
+    - include: keywords_operators
+    - match: '\['
+      scope: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.const.set.pascal
+        - include: type_identifiers
+        - match: '\]'
+          scope: punctuation.bracket.pascal
+          pop: true
+    - match: '\('
+      scope: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.record.fields.pascal
+        - include: const_expression
+        - match: '\)'
+          scope: punctuation.bracket.pascal
+          pop: true
+    - match: (?i:(deprecated|experimental)+)
+      scope: storage.modifier.pascal
+
+  const_any_type:
+    - match: (?!({{reserved_words}})+\b)\b(\w+)\s*(=)\s*
+      captures:
+        2: support.type.entity.pascal entity.name.constant.pascal
+        3: punctuation.pascal
+      push:
+        - meta_scope: meta.scope.const.pascal
+        - include: const_expression
+        - match: ;
+          pop: true
+
+  const_typed_any:
+    - match: '(?!({{reserved_words}})+\b)\b(\w+)\s*:'
+      captures:
+        2: support.type.entity.pascal entity.name.constant.pascal
+      push:
+        - meta_scope: meta.scope.const.typed.pascal
+        - include: type_anonymous_definitions
+        - match: ;
+          pop: true
+
+  ##############################################################################
+  # functions
+  ##############################################################################
+
+  functions:
+    - include: method_implemented
+    - include: operator_implemented
+    - include: constructor_implemented
+    - include: function
+    - include: operator
+
+  object_methods:
+    - include: method_declared
+    - include: constructor_declared
+    - include: property
+    - include: operator_declared
+
+  interface_methods:
+    - include: method_declared
+
+  class_methods:
+    - include: method_declared
+    - include: constructor_declared
+    - include: property
+
+  function_parameters:
+    - include: keywords_parameter_modifiers
+    - include: keywords_types
+    - include: punctuation_parameters
+
+  generic_parameter_list:
+    - match: (\w+)\s*(?=(,|;|>)+)
+      captures:
+        1: support.type.template.pascal
+    - match: (\w+)\s*:\s*(\w+)\s*(?=(,|;|>)+)
+      captures:
+        1: support.type.template.pascal
+        2: support.type.class.pascal
+    - match: (?i:(const))\s+(\w+)\s*:\s*
+      captures:
+        1: storage.modifier.pascal
+        2: support.type.template.pascal
+      push:
+        - include: type_identifiers
+        - match: (?=(;|>)+)
+          pop: true
+
+  generic_specialization_list:
+    - include: type_identifiers
+
+  function_prototype:
+    # generic parameter list
+    - match: '<'
+      scope: punctuation.bracket.pascal
+      push:
+        - include: generic_parameter_list
+        - meta_scope: meta.scope.generic.parameters.pascal
+        - match: '>'
+          scope: punctuation.bracket.pascal
+          pop: true
+    # parameter list
+    - match: \(
+      scope: punctuation.bracket.pascal
+      push:
+        - meta_scope: meta.scope.function.parameters.pascal
+        - include: function_parameters
+        - match: \)
+          scope: punctuation.bracket.pascal
+          pop: true
+    # function result
+    - match: ':'
+      scope: punctuation.separator.pascal
+      push:
+        - include: type_identifiers       
+        - match: ;
+          pop: true
+      pop: true
+    # end of function
+    - match: ;
+      pop: true
+
+  # https://freepascal.org/docs-html/ref/refsu33.html#x86-1080006.7.1
+
+  property:
+    - match: (?i:(property))\s+(\w+)\s*
+      captures:
+        1: keyword.control.pascal
+        2: support.type.entity.pascal entity.name.method.pascal entity.name.function.pascal
+      push:
+        - meta_scope: meta.scope.property.pascal
+        - match: \[
+          scope: punctuation.bracket.pascal
+          push:
+            - include: function_parameters
+            - match: \]
+              scope: punctuation.bracket.pascal
+              pop: true
+        - match: :\s*(?=\w+)
+          push:
+            - match: (?i:(read|write|stored|implements)+)\s+(\w+)
+              captures:
+                1: keyword.control.pascal
+                2: variable.identifier.pascal
+            - include: type_identifiers
+            - match: ;
+              pop: 2
+
+  method_declared:
+    - match: (?i:(generic)\s+)*(?i:(class)\s+)*\b(?i:(function|procedure)+)\b\s+(\w+)
+      captures:
+        1: keyword.control.pascal
+        2: keyword.control.pascal
+        3: keyword.control.pascal
+        4: support.type.entity.pascal entity.name.method.pascal entity.name.function.pascal
+      push:
+        - meta_scope: meta.scope.method.pascal
+        - include: function_prototype
+
+  constructor_declared:
+    - match: (?i:\b(class\s+)*(constructor|destructor)+\s+(\w+))
+      captures:
+        1: keyword.control.pascal
+        2: keyword.control.pascal
+        3: support.type.entity.pascal entity.name.method.pascal entity.name.function.pascal
+      push:
+        - meta_scope: meta.scope.method.pascal
+        - include: function_prototype
+
+  operator_declared:
+    - match: (?i:(class\s+operator)+\s+({{operators_code}}|{{operators_overload}}))
+      captures:
+        1: keyword.control.pascal
+        2: support.type.entity.pascal entity.name.method.pascal entity.name.function.pascal
+      push:
+        - meta_scope: meta.scope.method.pascal
+        - include: function_prototype
+
+  method_implemented:
+    - match: (?i:(generic)\s+)*(?i:(class)\s+)*(?i:(function|procedure)+)\s+((\w+)(\.)(\w+))
+      captures:
+        1: keyword.control.pascal
+        2: keyword.control.pascal
+        3: keyword.control.pascal
+        4: entity.name.method.pascal entity.name.function.pascal
+        5: support.type.entity.pascal
+        6: punctuation.separator.pascal
+      push:
+        - meta_scope: meta.scope.method.pascal
+        - include: function_prototype
+
+  constructor_implemented:
+    - match: (?i:((class)\s+)*\b(constructor|destructor)+)\b\s+((\w+)(\.)(\w+))
+      captures:
+        1: keyword.control.pascal
+        3: keyword.control.pascal
+        4: entity.name.method.pascal entity.name.function.pascal
+        5: support.type.entity.pascal
+        6: punctuation.separator.pascal
+      push:
+        - meta_scope: meta.scope.method.pascal
+        - include: function_prototype
+
+  operator_implemented:
+    - match: (?i:(class\s+operator)+\s+((\w+)(\.)({{operators_code}}|{{operators_overload}})))
+      captures:
+        1: keyword.control.pascal
+        2: entity.name.method.pascal entity.name.function.pascal
+        3: support.type.entity.pascal
+        4: punctuation.separator.pascal
+      push:
+        - meta_scope: meta.scope.method.pascal
+        - include: function_prototype
+
+  function:
+    - match: (?i:(generic)\s+)*\b(?i:(function|procedure)+)\b\s+(\w+)
+      captures:
+        1: keyword.control.pascal
+        2: keyword.control.pascal
+        3: support.type.entity.pascal entity.name.function.pascal
+      push:
+        - meta_scope: meta.scope.function.pascal
+        - include: function_prototype
+
+  operator:
+    - match: \b(?i:(operator))\b\s+({{operators_all}})
+      captures:
+        1: keyword.control.pascal
+        2: support.type.entity.pascal entity.name.function.operator.pascal
+      push:
+        - meta_scope: meta.scope.function.pascal
+        - include: function_prototype
+
+  ##############################################################################
+  # expressions
+  ##############################################################################
+
+  expressions:
+    - include: keywords_statements
+    - match: '[^\.]\b(?i:({{function_compiler_instrinsics}})+)\b\s*(\()'
+      captures:
+        1: keyword.compiler.instrinsic.pascal
+        2: punctuation.brackets.pascal
+      push: expression_function_call
+    - match: '\b(\w+)\b\s*(\()'
+      captures:
+        1: variable.function.pascal
+        2: punctuation.brackets.pascal
+      push: expression_function_call
+
+  expression_function_call:
+    - meta_scope: meta.scope.function.call.pascal
+    - include: punctuation_function_call
+    - include: expressions
+    - match: \)
+      scope: punctuation.brackets.pascal
+      pop: true
+
+  ##############################################################################
+  # statements
+  ##############################################################################
+
+  # https://freepascal.org/docs-html/ref/refch13.html#x157-17900013
+
+   # 13.1 Simple statements
+   #  13.1.1 Assignments
+   #  13.1.2 Procedure statements
+   #  13.1.3 Goto statements
+   # 13.2 Structured statements
+   #  13.2.1 Compound statements
+   #  13.2.2 The Case statement
+   #  13.2.3 The If..then..else statement
+   #  13.2.4 The For..to/downto..do statement
+   #  13.2.5 The For..in..do statement
+   #  13.2.6 The Repeat..until statement
+   #  13.2.7 The While..do statement
+   #  13.2.8 The With statement
+   #  13.2.9 Exception Statements
+   # 13.3 Assembler statements
+
+  statements:
+    - include: statement_case
+    - include: statement_repeat
+    - include: statement_try
+    - include: statement_assembler
+    - include: statement_goto
+    - include: expressions
+    - include: statement_label
+
+
+  statement_nested:
+    - include: statements
+    - include: section_code
+
+  statement_label:
+    - match: (\w+)\s*(:(?!=))
+      captures:
+        1: support.type.label.pascal
+        2: punctuation.separator.pascal
+
+  statement_goto:
+    - match:  \b(?i:(goto))\s+(\w+)
+      captures:
+        1: keyword.control.pascal
+        2: support.type.label.pascal
+
+  # https://freepascal.org/docs-html/ref/refse90.html#x172-19400013.3
+  statement_assembler:
+    - match: \b(?i:(asm))\b
+      captures:
+        1: keyword.control.pascal
+      embed: scope:source.asm.x86_64
+      embed_scope: source.asm.embedded.pascal
+      escape: (?i)(end)\s*(?=(\[(.*)\])*)
+      escape_captures:
+        1: keyword.control.pascal
+
+  statement_try:
+    - match: \b(?i:(try))\b
+      scope: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.try.pascal
+        - include: statement_nested
+        - match: \b(?i:(except))\b
+          scope: keyword.control.pascal
+          push:
+            - include: statements
+            - include: section_code
+            - match: \b(?i:(end))\b
+              captures:
+                1: keyword.control.pascal
+              pop: 2
+        - match: \b(?i:(finally))\b
+          scope: keyword.control.pascal
+          push:
+            - include: statement_nested
+            - match: \b(?i:(end))\b
+              captures:
+                1: keyword.control.pascal
+              pop: 2
+
+  statement_case:
+    - match: \b(?i:(case))\b
+      scope: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.case.pascal
+        - match: \b(?i:(of))\b
+          scope: keyword.control.pascal
+          push:
+            - include: statement_nested
+            - match: (\w+)\s*((:(?!=))|,)
+              captures:
+                1: support.type.label.pascal
+                2: punctuation.separator.pascal
+            - match: \b(?i:(end))\b
+              captures:
+                1: keyword.control.pascal
+              pop: 2
+
+  statement_repeat:
+    - match: \b(?i:(repeat))\b
+      scope: keyword.control.pascal
+      push:
+        - meta_scope: meta.scope.repeat.pascal
+        - match: \b(?i:(until))\b
+          scope: keyword.control.pascal
+          push:
+            - include: expressions
+            - match: ;
+              pop: 2
+        - include: statement_nested
+
+  ##############################################################################
+  # sections
+  ##############################################################################
+
+  section_file:
+    - match: \b(?i:(program))\b\s+(\w+)\s*;
+      captures:
+        1: keyword.control.pascal
+      push: section_program
+    - match: \b(?i:(unit))\b\s+(\w+)\s*;
+      captures:
+        1: keyword.control.pascal
+      push: section_unit
+    - match: \b(?i:(library))\b\s+(\w+)\s*;
+      captures:
+        1: keyword.control.pascal
+      push: section_library
+    - include: section_data
+    - include: section_code
+    - include: section_uses
+
+  section_program:
+    - clear_scopes: 1
+    - meta_scope: meta.scope.program.pascal
+    - include: section_data
+    - include: section_code
+    - include: section_uses
+
+  section_uses:
+    - match: \b(?i:(uses))\b
+      scope: keyword.control.unit.pascal
+
+  section_unit:
+    - clear_scopes: 1
+    - meta_scope: meta.scope.unit.pascal
+    - match: \b(?i:(interface))\b
+      captures:
+        1: keyword.control.unit.pascal
+      push:
+        - meta_scope: meta.scope.unit.interface.pascal
+        - include: section_data
+        - include: section_uses
+        - match: \b(?i:(implementation))\b
+          captures:
+            1: keyword.control.unit.pascal
+          pop: true
+          push:
+            - meta_scope: meta.scope.unit.implementation.pascal
+            - include: section_uses
+            - include: section_data
+            - include: section_code
+
+  section_library:
+    - clear_scopes: 1
+    - meta_scope: meta.scope.program.pascal
+    - include: section_data
+    - include: section_code
+    - include: section_uses
+    - match: \b(?i:(exports))\b
+      captures:
+        1: keyword.control.unit.pascal
+
+  section_data:
+    - include: data_sections
+    - include: functions
+
+  section_code:
+    - match: \b(?i:({{section_begins}})+)\b
+      captures:
+        1: keyword.control.pascal
+      push: 
+        - meta_scope: meta.scope.code.pascal
+        - include: statements
+        - include: section_code
+        - match: \b(?i:(end))\b\s*
+          captures:
+            1: keyword.control.pascal
+          pop: true
+        - include: punctuation_code
+
+  ##############################################################################
+  # data sections
+  ##############################################################################
+
+  list_declarations:
+    - match: '{{data_section_keywords}}'
+      pop: true
+    - match: '{{code_section_keywords}}'
+      pop: true
+    - match: '{{visibility_section_keywords}}'
+      pop: true
+    - include: data_sections
+
+  data_sections:
+    - include: keywords_modifiers
+    - match: \b(?i:(const))\b
+      scope: keyword.control.pascal
+      push: section_const
+    - match: \b(?i:(type))\b
+      scope: keyword.control.pascal
+      push: section_type
+    - match: \b(?i:(var|threadvar))\b
+      scope: keyword.control.pascal
+      push: section_var
+    - match: \b(?i:(label))\b
+      scope: keyword.control.pascal
+      push: section_label
+
+  section_const:
+    - meta_scope: meta.scope.const.pascal
+    - include: const_declarations
+
+  section_type:
+    - meta_scope: meta.scope.type.pascal
+    - include: type_declarations
+
+  section_var:
+    - meta_scope: meta.scope.var.pascal
+    - include: var_declarations
+
+  section_label:
+    - meta_scope: meta.scope.label.pascal
+    - include: list_declarations

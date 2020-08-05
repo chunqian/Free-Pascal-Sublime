@@ -4,6 +4,7 @@
   "binary": "$dir/$(project-name).app/Contents/MacOS/$(project-name)",
   "options": [
     "--cpu=x86_64",
-    "--widgetset=cocoa"
+    "--widgetset=cocoa",
+    "--compiler=/usr/local/lib/fpc/3.3.1/ppcx64"
   ]
 }

@@ -1,0 +1,9 @@
+{
+   "scope": "meta.scope.program.pascal - meta.scope.code.pascal, meta.scope.unit.pascal - meta.scope.code.pascal",
+   "completions":
+   [
+      { "trigger": "var", "contents": "var\n\t$0" },
+      { "trigger": "type", "contents": "type\n\t$0" },
+      { "trigger": "const", "contents": "const\n\t$0" }
+   ]
+}

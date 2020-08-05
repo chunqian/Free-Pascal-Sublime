@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+while ${1} do 
+	begin
+		$0
+	end;
+]]></content>
+	<description>while .. do</description>
+    <tabTrigger>while</tabTrigger>
+    <scope>meta.scope.code.pascal</scope> 
+</snippet>

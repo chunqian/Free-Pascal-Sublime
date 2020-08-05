@@ -1,0 +1,16 @@
+<snippet>
+    <content><![CDATA[
+{\$mode objfpc}
+
+unit ${1:unit_name};
+interface
+$0
+
+implementation
+
+end.
+]]></content>
+	<description>unit .. end.</description>
+    <tabTrigger>unit</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

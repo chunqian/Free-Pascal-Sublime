@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+class operator Finalize(var self: $0);
+class operator Initialize(var self: $0);
+class operator AddRef(var self: $0);
+class operator Copy(constref src: $0; var dest: $0);
+]]></content>
+	<description>managment operators</description>
+    <tabTrigger>opman</tabTrigger>
+    <scope>meta.scope.record.pascal</scope> 
+</snippet>

@@ -1,8 +1,0 @@
-<snippet>
-    <content><![CDATA[
-class operator ${1:=} (left: ${2:record}; right: ${2:record}): ${4:result};$0
-]]></content>
-	<description>Record Operator</description>
-    <tabTrigger>op</tabTrigger>
-    <scope>meta.scope.record.pascal</scope> 
-</snippet>

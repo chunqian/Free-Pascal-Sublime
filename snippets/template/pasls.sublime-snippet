@@ -1,0 +1,35 @@
+<!-- 
+	For more information on initializationOptions see:
+	https://github.com/genericptr/pascal-language-server 
+-->
+<snippet>
+	<content><![CDATA[
+"pascal-language-server":
+{
+	"enabled": true,
+	"initializationOptions":
+	{
+		"fpcOptions":
+		[
+			"-Fu~/path/to/unit",
+		],
+		"options":
+		{
+			"includeWorkspaceFoldersAsUnitPaths": true,
+			"insertCompletionProcedureBrackets": true,
+			"workspaceSymbols": false,
+			"minimalisticCompletions": false,
+			"publishDiagnostics": false
+		},
+		"overloadPolicy": 3,
+		"maximumCompletions": 100,
+		"program": "Main.pas",
+		"symbolDatabase": "symbols.db",
+		"excludeUnits": ["system.pp"]
+	}
+}
+]]></content>
+	<description>pascal language server</description>
+	<tabTrigger>pasls</tabTrigger>
+	<scope>source.json.sublime.project</scope> 
+</snippet>

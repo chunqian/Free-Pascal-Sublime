@@ -1,8 +1,0 @@
-<snippet>
-    <content><![CDATA[
-specialize ${1:name}<${2:type}>$0;
-]]></content>
-	<description>specialize</description>
-    <tabTrigger>spe</tabTrigger>
-    <scope>source.pascal</scope> 
-</snippet>

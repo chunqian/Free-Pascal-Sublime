@@ -6,6 +6,7 @@ import urllib.request
 import sys
 import xml.etree.ElementTree as ET
 
+# regex patterns
 pattern_func = re.compile("^\s*(procedure|function)+\s+(\w+)")
 pattern_meth_decl = re.compile("^\s*(class)*\s*(procedure|function|constructor|destructor)+\s+(\w+)")
 pattern_method = re.compile("^\s*(class)*\s*(procedure|function|constructor|destructor)+\s+(\w+)\.(\w+)")
@@ -181,6 +182,7 @@ class GotoFunctionImplementationCommand(sublime_plugin.TextCommand):
 			cur_line = start_line
 			content = line_str(self.view, cur_line)
 
+			# TODO: verify interface/implementation scopes
 			res = pattern_func.match(content)
 			match = match_selector(self.view, cur_line, "meta.function.declared.pascal")
 			if res and match:
@@ -260,6 +262,7 @@ class ImplementMethodCommand(GotoFunctionImplementationCommand):
 		# def description(self):
 		# 		return false
 
+
 class FindAllOccurencesCommand(sublime_plugin.TextCommand):
 	def on_done(self, index):
 		print(index)
@@ -315,6 +318,7 @@ class FindAllOccurencesCommand(sublime_plugin.TextCommand):
 		#self.view.show_popup_menu(items, self.on_done)
 		self.view.show_popup(html, max_width=800, on_navigate=lambda x: goto_line(self.view, x))
 
+
 class LazDocCommand(sublime_plugin.TextCommand):
 
 	def show_url(self, url):
@@ -346,16 +350,20 @@ class LazDocCommand(sublime_plugin.TextCommand):
 			if xml == "":
 				html = "<p>No results found</p>"
 			else:
+				# TODO: getlazarus.org is bugged and returns HTML tags in the title tag
+				# we need to parse these out or include them
+				# <title>
+				# 	<b>TJSONObject</b>
+				# 	Class
+				# </title>
+				xml = re.sub(r"<b>(\w+)</b>", r"\1", xml, flags=re.MULTILINE)
+				xml = xml.replace("\n", "")
+				xml = xml.replace("<no description>", "no description")
+
 				root = ET.fromstring(xml)
 				for result in root.findall('result'): 
 					link = result.attrib['link']
 
-					# TODO: getlazarus.org is bugged and returns HTML tags in the title tag
-					# we need to parse these out or include them
-					# <title>
-					# 	<b>TJSONObject</b>
-					# 	Class
-					# </title>
 					title = result.find('title').text
 
 					# attempt to parse children and retain some data
@@ -369,9 +377,27 @@ class LazDocCommand(sublime_plugin.TextCommand):
 					kind = result.find('kind').text
 					path = result.find('path').text
 					description = result.find('description').text
+					# TODO: we have to replace again here but why???
+					description = description.replace("<no description>", "no description")
 
 					html += "<h2><a href=\""+link+"\">"+title+"</a></h2>"
 					html += "<p style=\"margin-left: 10%\">"+description+"</p>"
 					html += "<hr>"
 
 			self.view.show_popup(html, max_width=800, on_navigate=lambda x: self.open_url(x))
+
+
+class DocSymbolsCommand(sublime_plugin.WindowCommand):
+
+	def run(self):
+		print("running DocSymbolsCommand...")
+		self.window.new_html_sheet('Sample Sheet', '<h1>HTML Sheet Test</h1><p>This is just a simple test</p><br/><a href="subl:doc_symbols">show again</a>', sublime.TRANSIENT)
+
+		# self.window.active_view().show_popup(
+  #         '<h1>HTML Sheet Test</h1><p>This is just a simple test</p>',
+  #         flags=sublime.COOPERATE_WITH_AUTO_COMPLETE,
+  #         location=-1,
+  #         max_width=1024)
+		# or get sheet from new_html_sheet()
+		# window.active_sheet().set_contents('Other')
+		# window.active_sheet().set_name('New Name')

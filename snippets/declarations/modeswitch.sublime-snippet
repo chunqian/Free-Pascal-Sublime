@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+{\$modeswitch $0}
+]]></content>
+	<description>modeswitch</description>
+    <tabTrigger>mod</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

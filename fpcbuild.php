@@ -5,9 +5,15 @@ require('build.php');
 // enable ansi color since we're running in the terminal
 $enable_ansi_colors = true;
 
-// must supply command line arguments
+function show_help(): void {
+	print("--config=\"name\": name of configuration to use (optional).\n");
+	print("--target=\"name\": name of target to use (optional).\n");
+	print("--program=\"name\": name of program file (optional, can override existing settings).\n");
+	print("--codesign=(bool): enable code signing for project (optional).\n");
+}
+
 if (count($argv) == 1) {
-	print("no options provided.\n");
+	show_help();
 	exit(1);
 }
 
@@ -40,8 +46,6 @@ function parse_cmd_options(): array {
 	return $opts;
 }
 
-// print_r($argv);
-
 // find project path
 $project_path = null;
 $program_file = null;
@@ -56,6 +60,7 @@ for ($i=1; $i < count($argv); $i++) {
 
 			// override settings from command line
 			$cmd = parse_cmd_options();
+
 			if ($cmd['config'])
 				$fpcbuild['configuration'] = $cmd['config'];
 			if ($cmd['target'])
@@ -64,6 +69,8 @@ for ($i=1; $i < count($argv); $i++) {
 			// override target based settings
 			if ($cmd['codesign'])
 				$fpcbuild['targets'][$fpcbuild['target']]['codesign_enabled'] = true;
+			if ($cmd['program'])
+				$fpcbuild['targets'][$fpcbuild['target']]['program'] = $cmd['program'];
 
 			// print_r($fpcbuild);
 			// die;

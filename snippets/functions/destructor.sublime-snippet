@@ -1,0 +1,12 @@
+<snippet>
+    <content><![CDATA[
+destructor ${1:TObject}.${2:Destroy}; 
+begin
+	$0
+  inherited;
+end;
+]]></content>
+	<description>destructor</description>
+    <tabTrigger>des</tabTrigger>
+    <scope>(meta.scope.file.pascal | meta.scope.program.pascal | meta.scope.implementation.pascal) - meta.scope.struct.pascal</scope> 
+</snippet>

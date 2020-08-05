@@ -1,0 +1,9 @@
+<snippet>
+    <content><![CDATA[
+${1:MyEnum} = (${0});
+$1s = set of $1;
+]]></content>
+	<description>enum</description>
+    <tabTrigger>enum</tabTrigger>
+    <scope>source.pascal - meta.scope.code.pascal</scope> 
+</snippet>

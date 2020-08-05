@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+${1:ClassName}Protocol = objcprotocol${2:(${3:NSObject})}
+optional
+	  $0
+end;
+]]></content>
+	<description>objcprotocol … end</description>
+    <tabTrigger>objcprotocol</tabTrigger>
+    <scope>source.pascal - meta.scope.code.pascal</scope> 
+</snippet>

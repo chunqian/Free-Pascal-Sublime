@@ -1,0 +1,114 @@
+{
+
+  // color schemes:
+  // https://www.sublimetext.com/docs/color_schemes.html#ver-dev
+  // scope naming:
+  // https://www.sublimetext.com/docs/scope_naming.html
+  // legacy textmate grammars
+  // https://macromates.com/manual/en/language_grammars
+
+  "name": "Xcode",
+  "author": "Ryan Joseph",
+  "variables": {
+    "comment": "#29C832",
+    "macro": "#C77A4B",
+    "constant": "#149C92",
+    "link": "#4950FF",
+    "keyword": "#D8008F",
+    "string": "#D3232E",
+    "symbol": "#1DA9A2",
+    "entity": "#5CD8FF",
+    "text": "#E1E2E7"
+  },
+  "globals": {
+    "foreground": "#E1E2E7",
+    "background": "#1F2029",
+    "selection": "#35404E",
+    "caret": "white",
+    "line_highlight": "#EEF1F5",
+  },
+  "rules": [
+    {
+      "scope": "string",
+      "foreground": "var(string)",
+    },
+    {
+      "scope": "comment",
+      "foreground": "var(comment)",
+    },
+
+    {
+      "scope": "string.directive.pascal",
+      "foreground": "var(macro)",
+    },
+    {
+      "scope": "keyword.other.directive.pascal",
+      "foreground": "var(macro)",
+      "font_style": "italic",
+    },
+    {
+      "scope": "constant.language.directive.pascal",
+      "foreground": "var(macro)",
+      "font_style": "bold",
+    },
+    {
+      "scope": "keyword.other.todo.pascal",
+      "foreground": "var(macro)",
+      "font_style": "glow",
+    },
+    {
+      "scope": "markup.underline.link",
+      "foreground": "var(link)",
+      "font_style": "italic",
+    },
+    {
+      "scope": "constant",
+      "foreground": "var(constant)",
+    },
+    {
+      "scope": "keyword",
+      "foreground": "var(keyword)",
+    },
+    {
+      "scope": "support",
+      "foreground": "var(symbol)",
+    },
+    {
+      "scope": "storage",
+      "foreground": "var(symbol)",
+    },
+    {
+      "scope": "entity",
+      "foreground": "var(entity)",
+    },
+    {
+      "scope": "punctuation.separator",
+      "foreground": "var(text)",
+    },
+    {
+      "scope": "support.type.system",
+      "foreground": "var(keyword)",
+    },
+    {
+      "scope": "storage.type",
+      "foreground": "var(keyword)",
+    },
+    {
+      "scope": "storage.modifier",
+      "foreground": "var(keyword)",
+      "font_style": "italic",
+    },
+    {
+      "scope": "keyword.operator",
+      "foreground": "var(text)",
+    },
+    {
+      "scope": "keyword.operator.word",
+      "foreground": "var(keyword)",
+    },
+    {
+      "scope": "variable.function",
+      "foreground": "var(text)",
+    },
+  ]
+}

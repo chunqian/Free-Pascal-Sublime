@@ -10,10 +10,13 @@ const SYSTEM_IBTOOL = "/usr/bin/ibtool";
 const SYSTEM_PLIST_BUDDY = "/usr/libexec/PlistBuddy";
 const SYSTEM_XCRUN = "/usr/bin/xcrun";
 
+// SETTING CATEGORIES
+
 const SETTING_COMMON = "common";
 const SETTING_COMPILER = "compiler";
 const SETTING_MACROS = "macros";
 const SETTING_OPTIONS = "options";
+const SETTING_XCODEBUILD = "xcodebuild";
 
 const SETTING_SOURCE_PATHS = "source_paths";
 const SETTING_RESOURCE_PATHS = "resource_paths";
@@ -30,13 +33,21 @@ const SETTING_COMMON_INFO_PLIST = "info.plist";
 const SETTING_COMMON_PRODUCT_NAME = "product_name";
 const SETTING_COMMON_PRODUCT_PATH = "product_path";
 const SETTING_COMMON_TARGET = "target";
-const SETTING_COMMON_BUNDLE = "bundle";
 const SETTING_COMMON_PROGRAM = "program";
+const SETTING_COMMON_PLATFORM = "platform";
+
+// macos only
+const SETTING_COMMON_BUNDLE = "bundle";
 
 const SETTING_COMPILER_ARCHITECTURE = "architecture";
 const SETTING_COMPILER_VERSION = "version";
 const SETTING_COMPILER_SDK = "sdk";
 const SETTING_COMPILER_PATH = "path";
+const SETTING_COMPILER_MINIMUM_SYSTEM_VERSION = "minimum_system_version";
+
+const SETTING_XCODEBUILD_PROJECT = "project";
+const SETTING_XCODEBUILD_SCHEME = "scheme";
+const SETTING_XCODEBUILD_PRODUCT = "product";
 
 const SETTING_IS_PATH = true;
 const SETTING_REQUIRED = true;
@@ -47,7 +58,14 @@ const BUILD_MODE_DEBUG = 'debug';					// build with debug configuration and run 
 const BUILD_MODE_VSCODE = 'vscode';				// open VSCode after building
 const BUILD_MODE_LAZARUS = 'lazarus';			// run project with lazbuild and .fpcbuild file for settings
 const BUILD_MODE_QUICK = 'quick';					// build with standard settings and output to temp directory
-const BUILD_MODE_NO_RUN = '';							// build but do not run
+const BUILD_MODE_NO_RUN = 'build-only';		// build but do not run
+
+
+const PLATFORM_DARWIN = 'darwin';
+const PLATFORM_WINDOWS = 'windows';
+const PLATFORM_LINUX = 'linux';
+const PLATFORM_IPHONE = 'iphone';
+const PLATFORM_IPHONE_SIMULATOR = 'iphonesim';
 
 // ================================================================================================
 // Makefile
@@ -90,6 +108,7 @@ $settings = array();
 $macros = array();
 $enable_ansi_colors = false;
 $shared_makefile = null;
+$target_platform = strtolower(PHP_OS_FAMILY);
 
 // ================================================================================================
 // UTILITIES
@@ -186,6 +205,21 @@ function printc(int $color, string $text) {
 	}
 }
 
+function run_in_simulator(string $bundle_path, string $bundle_id): void {
+	$command = "open -a Simulator.app\n";
+	$command .= SYSTEM_XCRUN." simctl terminate booted $bundle_id\n";
+	$command .= SYSTEM_XCRUN." simctl install booted \"$bundle_path\"\n";
+	$command .= SYSTEM_XCRUN." simctl launch booted $bundle_id\n";
+
+	// TODO: make this an option since it's instrusive
+	// https://shashikantjagtap.net/simctl-control-ios-simulators-command-line/
+	// show debug log
+	// $command .= 'tail -f `xcrun simctl getenv booted SIMULATOR_LOG_ROOT`/system.log\n';
+
+	// print($command);
+	run_in_terminal($command);
+}
+
 function run_in_terminal($script) {
 	// just to be sure
 	$script = addslashes($script);
@@ -200,6 +234,12 @@ function run_in_terminal($script) {
 	$command .= "end tell\n";
 	$command .= "EOF\n";
 	exec($command);
+}
+
+function xcodebuild(string $project, string $scheme, string $sdk) {
+	$command = 'xcodebuild -project "'.$project.'" -scheme '.$scheme.' -sdk '.$sdk;
+	passthru2($command, $exit_code, true);
+	return $exit_code;
 }
 
 function passthru_pattern($command, $pattern, $replacement) {
@@ -226,6 +266,10 @@ function passthru_pattern($command, $pattern, $replacement) {
 function osascript(string $command): string {
 	$command = addslashes($command);
 	return exec("osascript -e \"$command\"");
+}
+
+function error_dialog(string $message): void {
+	$result = osascript('tell application (path to frontmost application as text) to display dialog "'.addslashes($message).'" buttons {"Ok"} with icon stop');
 }
 
 function ask_dialog(string $message, array $buttons): string {
@@ -276,28 +320,26 @@ function build_finished(int $error_code = 0): void {
 }
 
 // standard fatal error to exit script
-function fatal(string $error, bool $show_error = true, bool $show_trace = true): void {
+function fatal(string $error, bool $show_trace = true, bool $show_dialog = true): void {
 	global $argv;
 	printc(ANSI_BACK_RED, "FATAL: $error\n");
-	// show an error which we can see in the current file
-	if ($argv[1]) {
-		if ($show_error) show_error($argv[1], $error, false);
-		if ($show_trace) {
-			$e = new Exception;
-			var_dump($e->getTraceAsString());
-		}
+	if ($show_trace) {
+		$e = new Exception;
+		var_dump($e->getTraceAsString());
 	}
+	if ($show_dialog) error_dialog($error);
 	exit(-1);
 }
 
 // shows an error in FPC format which the build system can capture
 function show_error(string $file, string $message, bool $fatal = true): void {
 	print("$file:1: error: 0: $message\n");
-	if ($fatal) fatal($message, false);
+	if ($fatal) fatal($message, true, false);
 }
 
 function add_setting(string $key, $value, array &$settings): void {
 	switch ($key) {
+		case SETTING_XCODEBUILD:
 		case SETTING_COMPILER:
 		case SETTING_COMMON:
 			if (is_array($value)) {
@@ -308,7 +350,11 @@ function add_setting(string $key, $value, array &$settings): void {
 			break;
 		case SETTING_MACROS:
 			foreach ($value as $macro_key => $macro_value) {
+				// macros have two formats:
+				// 1) $NAME
+				// 2) $(NAME)
 				$settings[$key]["\$$macro_key"] = $macro_value;
+				$settings[$key]["\$($macro_key)"] = $macro_value;
 			}
 			break;
 		case SETTING_OPTIONS:
@@ -343,13 +389,13 @@ function add_setting(string $key, $value, array &$settings): void {
 
 function load_settings (array $fpcbuild): array {
 	
-	if (!$settings) {
-		$settings = array();
-		$settings[SETTING_COMPILER] = array();
-		$settings[SETTING_COMMON] = array();
-		$settings[SETTING_MACROS] = array();
-		$settings[SETTING_OPTIONS] = array();
-	}
+	// default settings
+	$settings = array();
+	$settings[SETTING_COMPILER] = array();
+	$settings[SETTING_COMMON] = array();
+	$settings[SETTING_MACROS] = array();
+	$settings[SETTING_OPTIONS] = array();
+	$settings[SETTING_XCODEBUILD] = array();
 
 	// main requirments
 	if (!$fpcbuild['target']) fatal('.fpcbuild must specifiy target.');
@@ -377,7 +423,7 @@ function load_settings (array $fpcbuild): array {
 		if ($parent) {
 			array_unshift($order, $parent);
 			$target = $fpcbuild['targets'][$parent];
-			if (!$target) fatal("target '".$target['parent']."' can't be found.");
+			if (!$target) fatal("parent target '$parent' can't be found.");
 		} else {
 			break;
 		}
@@ -400,11 +446,35 @@ function load_settings (array $fpcbuild): array {
 	return $settings;
 }
 
+function get_macro(string $name, bool $resolve = true, bool $required = true, string $message = '') {
+	global $macros;
+	// try both macro formats
+	$value = $macros['$'.$name];
+	if (!$value) 
+		$value = $macros['$('.$name.')'];
+	if ($required && $value == null) {
+		if ($message) 
+			fatal("$message (macro '$name' doesn't exist)");
+		else
+			fatal("macro '$name' doesn't exist.");
+	}
+	if ($resolve) 
+		$value = resolve_macro($value);
+	return $value;
+}
+
 function resolve_macro($value) {
 	global $macros;
+	global $project_path;
+
 	foreach ($macros as $macro_key => $macro_value) {
 		$value = str_replace($macro_key, $macro_value, $value);
 	}
+
+	// replace system macros
+	$value = preg_replace('/^~/', $_ENV['HOME'], $value);
+	$value = preg_replace('/^\./', getcwd(), $value);
+
 	return $value;
 }
 
@@ -434,16 +504,17 @@ function get_setting(string $category, string $name = "", bool $is_path = false,
 	}
 	$value = resolve_macro($value);
 
+
 	if (($is_path == SETTING_IS_PATH) && ($required) && (!file_exists($value))) {
 		if ($value) {
 			fatal("Setting path '$value' for key '$name' doesn't exist.");
 		} else {
-			fatal("Required setting key '$name' doesn't exist.");
+			fatal("Required setting key '$name' for category '$category' doesn't exist.");
 		}
 	}
 	if ($value == "") {
 		if ($required) {
-			fatal("Setting '$category/$name' is missing");
+			fatal("Required setting key '$name' for category '$category' doesn't exist.");
 		} else {
 			return null;
 		}
@@ -459,6 +530,7 @@ function get_paths(string $name, bool $as_string = false, string $wrap = "") {
 	foreach ($settings as $path) {
 		if ($path == "") continue;
 		$path = resolve_macro($path);
+
 		require_file($path, "missing path '$path'");
 		if ($wrap != "") {
 			$path = str_replace(WRAP_REPLACE_SYMBOL, "$path", $wrap);
@@ -558,7 +630,7 @@ function copy_metal($src, $dest) {
 	if (!compare_files($src, $new_dest)) {
 		print("compile metal shader: $src -> $new_dest\n");
 		make_dir(dirname($dest));
-		compile_metal($src, $new_dest);
+		// compile_metal($src, $new_dest);
 		touch($new_dest, filemtime($src));
 	}
 }
@@ -604,7 +676,8 @@ function copy_file($src, $dest, bool $makefile_eligable = true) {
 
 function copy_link($src, $dest) {
 	$link = readlink($src);
-	// TODO: how do we add this to makefile?
+	// TODO: add this to makefile
+	// ln -s "$src" "$dest"
 	@symlink($link, $dest);
 }
 
@@ -615,6 +688,12 @@ function copy_resources($src, $dest) {
 	if (!is_resource_dir($src)) {
 		copy_file($src, $dest."/".basename($src));
 	} else {
+		// if source folder has trailing / than copy entire directory structure
+		if ($src[strlen($src) - 1] == '/') {
+			$name = basename($src);
+			$dest = "$dest/$name";
+			make_dir($dest);
+		}
 		$files = scandir($src);
 		foreach ($files as $name) {
 			$path = $src."/".$name;
@@ -623,7 +702,6 @@ function copy_resources($src, $dest) {
 				if (is_link($path)) {
 					copy_link($path, $file_dest);
 				} elseif (is_resource_dir($path)) {
-					//print("copy directory $path to $file_dest\n");
 					make_dir($file_dest);
 					copy_resources($path, $file_dest);
 				} else {
@@ -738,42 +816,50 @@ function move_to_bin(string $exec, array $macros, ?array $fpcbuild): string {
 	}
 }
 
-function make_bundle(string $binary, string $bundle, ?array $resource_paths): string {
+function make_bundle(string $platform, string $binary, string $bundle, ?array $resource_paths): string {
 	global $shared_makefile;
-
-	print("make bundle $bundle.\n");
 
 	// Bundle Structures:
 	// https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html
+	print("make bundle $bundle.\n");
 
-	// make bundle
-	make_dir("$bundle");
-	make_dir("$bundle/Contents");
-	make_dir("$bundle/Contents/MacOS");
-	make_dir("$bundle/Contents/Frameworks");
-	make_dir("$bundle/Contents/Resources");
+	if ($platform == PLATFORM_DARWIN) {
+		make_dir("$bundle");
+		make_dir("$bundle/Contents");
+		make_dir("$bundle/Contents/MacOS");
+		make_dir("$bundle/Contents/Frameworks");
+		make_dir("$bundle/Contents/Resources");
+
+		$binary_dest = "$bundle/Contents/MacOS/".basename($binary);
+		$info_plist_dest = "$bundle/Contents/Info.plist";
+	} elseif ($platform == PLATFORM_IPHONE || $platform == PLATFORM_IPHONE_SIMULATOR) {
+		make_dir("$bundle");
+		$binary_dest = "$bundle/".basename($binary);
+		$info_plist_dest = "$bundle/Info.plist";
+	} else {
+
+		return $binary;
+	}
 
 	// TODO: -o should move this directly into the bundle! we're doing it backwards still...
 	// "product_path": "$project/$product_name" should be overriden for bundle targets
 	// move binary to bundle
-	$dest = "$bundle/Contents/MacOS/".basename($binary);
-	move_file($binary, $dest);
-	$binary = $dest;
+	move_file($binary, $binary_dest);
+	$binary = $binary_dest;
 
 	// copy info.plist
 	$path = get_setting(SETTING_COMMON, SETTING_COMMON_INFO_PLIST, SETTING_IS_PATH);
-	$dest = "$bundle/Contents/Info.plist";
 	increment_build($path);
-	copy_file($path, $dest, false);
-	replace_file_macros($dest, get_setting(SETTING_MACROS));
+	copy_file($path, $info_plist_dest, false);
+	replace_file_macros($info_plist_dest, get_setting(SETTING_MACROS));
 
 	// if makefiles are enabled then copy the output info.plist
 	// so it can be copied into the bundle later
 	if ($shared_makefile) {
 		$plist_name = basename($path).'.out';
 		$plist_out = dirname($path).'/'.$plist_name;
-		@copy($dest, $plist_out);
-		$shared_makefile->push('all', "cp -f $plist_out $dest");
+		@copy($info_plist_dest, $plist_out);
+		$shared_makefile->push('all', "cp -f $plist_out $info_plist_dest");
 	}
 
 	// copy resources
@@ -848,13 +934,13 @@ function find_fpc_build(string $project): ?string {
 	return null;
 }
 
-function run_command(string $command, bool $redirect_stdout = true): int {
-	//passthru($command, $exit_code);
-	// print("[$command]\n");
+function run_command(string $command): int {
 	printc(ANSI_FORE_BLUE, "[$command]\n");
 	$exit_code = -1;
-	if ($redirect_stdout) $command = "$command 2>&1 >/dev/null";
+	// if ($redirect_stdout) $command = "$command 2>&1 >/dev/null";
 	$ignored_errors = 0;
+	$fatal_errors = 0;
+	$fatal_error_message = "";
 	if ($handle = popen("$command", "r")) {
 		while (!feof($handle)) {
 			$buffer = fgets($handle, 1024);
@@ -874,12 +960,20 @@ function run_command(string $command, bool $redirect_stdout = true): int {
 				continue;
 			}
 
+			// fatal linker errors
+			// ld: library not found for libfreetype
+			// ld: framework not found OpenGLES
+			if (preg_match("/ld: (library|framework)+ not found .*/", $buffer)) {
+				$fatal_errors += 1;
+				$fatal_error_message = $buffer;
+			}
+
 			// TODO: this isn't getting captured, why not??
 			// fileless error
-			if (preg_match("/^(error|fatal)+: (.*)/", $buffer, $matches)) {
-				echo "/main.pas:0: error: 0: ".$matches[2]."\n";
-				continue;
-			}
+			// if (preg_match("/^(error|fatal)+: (.*)/", $buffer, $matches)) {
+			// 	echo "/main.pas:0: error: 0: ".$matches[2]."\n";
+			// 	continue;
+			// }
 
 			echo $buffer;
 		}
@@ -890,6 +984,15 @@ function run_command(string $command, bool $redirect_stdout = true): int {
 	} else {
 		fatal("popen failed");
 	}
+
+	// if there was only 1 fatal error then show a message
+	// otherwise just return an error code and continue
+	if ($fatal_errors == 1) {
+		fatal($fatal_error_message);
+	} elseif ($fatal_errors > 0) {
+		$exit_code = -2;
+	}
+
 	return $exit_code;
 }
 
@@ -903,18 +1006,22 @@ function lazbuild(string $project, string $options = ""): int {
 		while (!feof($handle)) {
 			$buffer = fgets($handle, 1024);
 			// redirect laz errors to fpc style with -vbr
-			// this is the usual format we expect in FPC.sublime-text
-			if (preg_match("/^([\/]+.*)\((\d+),(\d+)\) (error|fatal)+: \((\d+)\) (.*)/i", $buffer, $matches)) {
+			// this is the usual format we expect in FPC.sublime-build
+			// note: this patten is from FPC 3.0.4 and is not correct
+			if (preg_match("/^([\/]+.*):(\d+): (error|fatal|warning|hint)+: (\d+): \((\d+)\) (.*)$/i", $buffer, $matches)) {
+				$error_path = $matches[1];
+				$error_line = $matches[2];
+				$error_column = $matches[4];
+				$error_message = $matches[6];
+				$error_kind = strtolower($matches[3]);
+				echo "$error_path:$error_line:$error_column: $error_kind: $error_message\n";
+			} else if (preg_match("/^([\/]+.*)\((\d+),(\d+)\) (Error|Fatal|Warning|Hint)+: \((\d+)\) (.*)$/i", $buffer, $matches)) {
 				$error_path = $matches[1];
 				$error_line = $matches[2];
 				$error_column = $matches[3];
-				$error_id = $matches[5];
 				$error_message = $matches[6];
-				echo "$error_path:$error_line: error: $error_column: $error_message\n";
-				// echo $buffer;
-			} else if (preg_match("/^(error|fatal)+: (.*)/i", $buffer, $matches)) {
-				// fileless error
-				echo $buffer;
+				$error_kind = strtolower($matches[4]);
+				echo "$error_path:$error_line:$error_column: $error_kind: $error_message\n";
 			} else {
 				echo $buffer;
 			}
@@ -935,10 +1042,37 @@ function default_fpc_options(): string {
 	return " ".implode(" ", $options);
 }
 
+function xcode_path(): string {
+	return '/Applications/Xcode.app';
+}
+
+function platform_sdk(): string {
+	global $target_platform;
+	if ($target_platform == PLATFORM_DARWIN) {
+		return 'macosx';
+	} elseif ($target_platform == PLATFORM_IPHONE_SIMULATOR) {
+		return 'iphonesimulator';
+	} elseif ($target_platform == PLATFORM_IPHONE) {
+		return 'iphoneos';
+	} else {
+		fatal("can't find sdk for platform '$target_platform'");
+	}
+}
+
 function find_sdk_path(): string {
-	$file = sys_get_temp_dir().'/system_sdk_path.txt';
+	global $target_platform;
+	$file = sys_get_temp_dir()."/${target_platform}_sdk_path.txt";
 	if (!file_exists($file)) {
-		$sdk_path = exec('xcrun --show-sdk-path');
+		// if ($target_platform == PLATFORM_DARWIN) {
+		// 	$sdk_path = exec('xcrun --sdk macosx --show-sdk-path');
+		// } elseif ($target_platform == PLATFORM_IPHONE_SIMULATOR) {
+		// 	$sdk_path = exec('xcrun --sdk iphonesimulator --show-sdk-path');
+		// } elseif ($target_platform == PLATFORM_IPHONE) {
+		// 	$sdk_path = exec('xcrun --sdk iphoneos --show-sdk-path');
+		// } else {
+		// 	fatal("can't find sdk for platform '$target_platform'");
+		// }
+		$sdk_path = exec('xcrun --sdk '.platform_sdk().' --show-sdk-path');
 		file_put_contents($file, $sdk_path);
 		return $sdk_path;
 	}
@@ -1107,6 +1241,45 @@ function create_project_settings(string $project_file, string $template, array $
 	// }
 }
 
+/**
+ * performs the 'xcodebuild' command for the active target
+ *
+ * @return path of the xcode product
+ **/
+function run_xcode_project(): string {
+	$xcodeproj = get_setting(SETTING_XCODEBUILD, SETTING_XCODEBUILD_PROJECT, SETTING_IS_PATH);
+	$exit_code = xcodebuild($xcodeproj, get_setting(SETTING_XCODEBUILD, SETTING_XCODEBUILD_SCHEME), platform_sdk());
+	$xcode_product = get_setting(SETTING_XCODEBUILD, SETTING_XCODEBUILD_PRODUCT, SETTING_IS_PATH);
+	// codesign --force is supposed to do this I thought but I need to touch it
+	// otherwise io-deploy gives me an error
+	passthru2("touch \"$xcode_product/_CodeSignature\"", $exit_code, true);
+	return $xcode_product;
+}
+
+/**
+ * Launches xcode project using xcodebuild->launch settings
+ * options are "xcode" to run as if pressing the run button in xcode
+ * or "terminal" which uses a custom command
+ *
+ * @return void
+ **/
+function launch_xcode_project($func): void {
+	global $argv;
+	$launch = get_setting(SETTING_XCODEBUILD, 'launch');
+	$project = get_setting(SETTING_XCODEBUILD, SETTING_XCODEBUILD_PROJECT, SETTING_IS_PATH, true);
+	if ($launch == 'xcode') {
+		$dir = dirname($argv[0]);
+		$name = 'xcode_build.applescript';
+		$path = "$dir/scripts/$name";
+		if (!file_exists($path)) fatal("xcode build script can't be found ($path).");
+		passthru2("osascript \"$path\" $project", $exit_code);
+	} elseif ($launch == 'terminal') {
+		$func();
+	} else {
+		fatal(SETTING_XCODEBUILD.' -> launch must be either "xcode" or "terminal"');
+	}
+}
+
 function run_single_file(string $file, array $fpcbuild = null) {
 
 	// sanity test
@@ -1198,16 +1371,11 @@ function run_lazarus(string $project_path, ?string $project_file): void {
 	}
 
 	if ($json) {		
-		
-		// $json['project'] = str_replace("\$dir", $dir, $json['project']);
-		// $json['binary'] = str_replace("\$dir", $dir, $json['binary']);
-
 		if ($json['options']) {
 			$options = implode(" ", $json['options']);
 		} else {
 			$options = "";
 		}
-
 		// TODO: should we keep supporting "output" for lazarus?
 		if ($json['output']) {
 			// make build dir
@@ -1228,6 +1396,8 @@ function run_lazarus(string $project_path, ?string $project_file): void {
 				run_in_terminal($json['binary']);
 			} else if ($json['mode'] == "console") {
 				run_command($json['binary']);
+			} else if ($json['mode'] == "build-only") {
+				// do nothing
 			} else {
 				fatal("invalid build mode ".$json['mode']);
 			}
@@ -1276,184 +1446,6 @@ function run_build_script(string $file, string $project_file, array $fpcbuild) {
 	build_finished();
 }
 
-function run_project(string $file, string $project_file, ?array $fpcbuild, ?string $build_variant, bool $clean_build = false): void {
-	global $macros;
-	global $settings;
-	global $shared_makefile;
-
-	$project = dirname($project_file);
-
-	require_file($project, "Missing project '$project'");
-	print("Load project '$project'\n");
-
-	$run_after_build = true;
-
-	// setup default macros
-	$macros = array(
-		'~' => $_ENV['HOME'],
-		'$project' => $project,
-		'$parent' => dirname($project),
-		'$sdk_path' => dirname(find_sdk_path())
-	);
-
-	// macros which are replaced in new settings file
-	$settings_macros = array(
-		'program-file' => basename_no_ext($file)
-	);
-
-	// load fpc build if it wasn't provided
-	if (!$fpcbuild) $fpcbuild = load_fpc_build($project_file);
-
-	if (!$fpcbuild) {
-		create_project_settings($project_file, 'settings/bundle_settings.json', $settings_macros);
-		$fpcbuild = load_fpc_build($project_file);
-	}
-
-	$settings = load_settings($fpcbuild);
-	$macros = array_merge($macros, $settings["macros"]);
-
-	// enable the makefiles
-	if ($fpcbuild['makefile'])
-		$shared_makefile = new Makefile($project);
-
-	// common
-	$target_name = get_setting(SETTING_COMMON, SETTING_COMMON_TARGET);
-	$product_name = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_NAME);
-	$product_path = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_PATH);
-	$target_config = $fpcbuild['configuration'];
-	$program = get_setting(SETTING_COMMON, SETTING_COMMON_PROGRAM, true);
-	$bundle = get_setting(SETTING_COMMON, SETTING_COMMON_BUNDLE, true, false);
-
-	// add extra macros from settings
-	if ($program) $macros['$program'] = $program;
-	if ($bundle) $macros['$bundle'] = $bundle;
-
-	// compiler
-	$arch = get_setting(SETTING_COMPILER, SETTING_COMPILER_ARCHITECTURE);
-	$version = get_setting(SETTING_COMPILER, SETTING_COMPILER_VERSION);
-	$system_sdk = get_setting(SETTING_COMPILER, SETTING_COMPILER_SDK, SETTING_IS_PATH);
-
-	// paths
-	$source_paths = get_paths(SETTING_SOURCE_PATHS, true, "-Fu\"".WRAP_REPLACE_SYMBOL."\"");
-	$resource_paths = get_setting_resources(SETTING_RESOURCE_PATHS);
-	$framework_paths = get_paths(SETTING_FRAMEORK_PATHS, true, "-Ff\"".WRAP_REPLACE_SYMBOL."\"");
-	$library_paths = get_paths(SETTING_LIBRARY_PATHS, true, "-Fl\"".WRAP_REPLACE_SYMBOL."\"");
-	$include_paths = get_paths(SETTING_INCLUDE_PATHS, true, "-Fi\"".WRAP_REPLACE_SYMBOL."\"");
-
-	// define built-in macros for compiler path
-	$macros['$compiler_version'] = $version;
-	$macros['$compiler_arch'] = $arch;
-
-	if ($compiler_path = get_setting(SETTING_COMPILER, SETTING_COMPILER_PATH, true, SETTING_OPTIONAL)) {
-		$fpc = $compiler_path;
-	} else {
-		$fpc = "/usr/local/lib/fpc/$version/$arch";
-	}
-
-	if (!file_exists($fpc)) {
-		fatal("can't find compiler at $fpc");
-	}
-	$output = "$project/$target_name.$target_config.$arch";
-
-	// build final options string
-	$options = get_setting(SETTING_OPTIONS);
-
-	// add additional options from settings
-	if ($min_system_version = get_setting(SETTING_COMPILER, 'minimum_system_version')) {
-		// -k"-macosx_version_min $min_system_version"
-		$options[] = "-WM$min_system_version";
-	}
-
-	$options[] = "-FU\"$output\"";
-	$options[] = "-XR\"$system_sdk\"";
-	$options[] = "-o\"$product_path\"";
-
-	$options = @implode(" ", $options);
-
-	// clean output directory
-	if ($clean_build && file_exists($output)) {
-		print("Cleaning output directory at '$output'...\n");
-		// TODO: this isn't portable! use mv -f source.time-stamp ~/.Trash
-		exec("trash $output");
-	}
-
-	// make output directory
-	make_dir($output);
-
-	// build command
-	$command = "$fpc \"$program\" $options $source_paths $framework_paths $library_paths $include_paths";
-	$command = trim($command);
-
-	// run command
-	push_makefile($command);
-	$exit_code = run_command($command);
-
-	if ($exit_code == 0) {
-		$path_info = pathinfo($program);
-
-		// verify the binary/executable location
-		$binary = $product_path;
-		if (!file_exists($binary)) {
-			fatal("compiled binary doesn't exist '$binary'");
-		}
-
-		// move .dSYM to output directory
-		$dsym = dirname($product_path).'/'.basename_no_ext($product_path).".dSYM";
-		if (file_exists($dsym)) {
-			$dest = $output."/".basename($dsym);
-			rmovedir($dsym, $dest);
-		}
-
-		// make the package if a bundle path was specificed
-		if ($bundle) $binary = make_bundle($binary, $bundle, $resource_paths);
-
-		if ($shared_makefile) {
-			$shared_makefile->push('clean', "rm -r $output");
-			$shared_makefile->push('clean', "rm -r $bundle");
-
-			$shared_makefile->push('install', "cp $bundle ~/Applications/".basename($bundle));
-			$shared_makefile->write_to_file("$project/Makefile");
-		}
-
-		// run the executable
-		if ($run_after_build) {
-
-			// TODO: add env common setting to $binary string
-
-			switch ($build_variant) {
-				case BUILD_MODE_DEBUG:
-					prepare_debug_settings($project, array("r"));
-					$debug_commands = "$project/Settings/debug.txt";
-					if (file_exists($debug_commands)) {
-						run_in_terminal("/usr/bin/lldb --source \"$debug_commands\" $binary");
-					} else {
-						run_in_terminal("/usr/bin/lldb $binary");
-					}
-					break;
-
-			  case BUILD_MODE_VSCODE:
-			  	$command = "open -a \"Visual Studio Code\"";
-			  	// print("[$command]\n");
-			  	// passthru($command, $exit_code);
-			  	passthru2($command);
-			  	build_finished(0);
-			  	break;
-
-			  case BUILD_MODE_DEFAULT:
-			  	run_in_terminal($binary);
-			  	break;
-
-				default:
-					break;
-			}
-		}
-		
-	} else {
-		print("failed with exit code $exit_code\n");
-		build_finished($exit_code);
-	}
-}
-
 // runs a program file quickly and saves output to temporary location
 // meant to be used with shell alias "fpcbuild" as a quick replacemnet
 // for "fpc" on the commandline
@@ -1494,6 +1486,298 @@ function run_quick_file(string $file): void {
 	build_finished();
 }
 
+function run_project(string $file, string $project_file, ?array $fpcbuild, ?string $build_variant, bool $clean_build = false): void {
+	global $argv;
+	global $macros;
+	global $settings;
+	global $shared_makefile;
+	global $target_platform;
+
+	$project = dirname($project_file);
+
+	require_file($project, "Missing project '$project'");
+	print("* Project '$project'\n");
+
+	$run_after_build = true;
+
+	// setup default macros
+	$macros = array(
+		'$project' => $project,
+		'$parent' => dirname($project),
+	);
+
+	// macros which are replaced in new settings file
+	$settings_macros = array(
+		'program-file' => basename_no_ext($file)
+	);
+
+	// load fpc build if it wasn't provided
+	if (!$fpcbuild) $fpcbuild = load_fpc_build($project_file);
+
+	if (!$fpcbuild) {
+		create_project_settings($project_file, 'settings/bundle_settings.json', $settings_macros);
+		$fpcbuild = load_fpc_build($project_file);
+	}
+
+	$settings = load_settings($fpcbuild);
+	// print_r($settings);
+
+	// add macros from settings
+	$macros = array_merge($macros, $settings['macros']);
+
+	// enable the makefiles
+	if ($fpcbuild['makefile'])
+		$shared_makefile = new Makefile($project);
+
+	// common
+	$target_name = get_setting(SETTING_COMMON, SETTING_COMMON_TARGET);
+	$macros['$target'] = $target_name;
+
+	$product_name = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_NAME);
+	$product_path = get_setting(SETTING_COMMON, SETTING_COMMON_PRODUCT_PATH);
+	$target_config = $fpcbuild['configuration'];
+	$program = get_setting(SETTING_COMMON, SETTING_COMMON_PROGRAM, SETTING_IS_PATH);
+	$platform = get_setting(SETTING_COMMON, SETTING_COMMON_PLATFORM, false, SETTING_OPTIONAL);
+	$bundle = get_setting(SETTING_COMMON, SETTING_COMMON_BUNDLE, SETTING_IS_PATH, SETTING_OPTIONAL);
+	
+	// use current platform
+	// 'Windows', 'BSD', 'Darwin', 'Solaris', 'Linux' or 'Unknown'
+	if (!$platform)
+		$platform = strtolower(PHP_OS_FAMILY);
+
+	// set the global target platform
+	$target_platform = $platform;
+
+	// add the sdk path macro once the target platform is established
+	$macros['$sdk_full'] = find_sdk_path();
+	$macros['$sdk_path'] = dirname($macros['$sdk_full']);
+
+	print("* Target '$target_name'\n");
+	print("* Configuration '$target_config'\n");
+	print("* Plaforform '$platform'\n");
+
+	// add extra macros from settings
+	if ($program) $macros['$program'] = $program;
+	if ($bundle) $macros['$bundle'] = $bundle;
+
+	// compiler
+	$arch = get_setting(SETTING_COMPILER, SETTING_COMPILER_ARCHITECTURE);
+	$version = get_setting(SETTING_COMPILER, SETTING_COMPILER_VERSION);
+	$system_sdk = get_setting(SETTING_COMPILER, SETTING_COMPILER_SDK, SETTING_IS_PATH, SETTING_OPTIONAL);
+	
+	// use sdk for current platform
+	if (!$system_sdk)
+		$system_sdk = find_sdk_path();
+
+	// paths
+	$source_paths = get_paths(SETTING_SOURCE_PATHS, true, "-Fu\"".WRAP_REPLACE_SYMBOL."\"");
+	$resource_paths = get_setting_resources(SETTING_RESOURCE_PATHS);
+	$framework_paths = get_paths(SETTING_FRAMEORK_PATHS, true, "-Ff\"".WRAP_REPLACE_SYMBOL."\"");
+	$library_paths = get_paths(SETTING_LIBRARY_PATHS, true, "-Fl\"".WRAP_REPLACE_SYMBOL."\"");
+	$include_paths = get_paths(SETTING_INCLUDE_PATHS, true, "-Fi\"".WRAP_REPLACE_SYMBOL."\"");
+
+	// use version macros
+	if ($version == 'latest') {
+		$version = find_fpc_version(true);
+	} else if ($version == 'stable') {
+		$version = find_fpc_version(false);
+	}
+
+	// define built-in macros for compiler path
+	$macros['$compiler_version'] = $version;
+	$macros['$compiler_arch'] = $arch;
+
+	// resolve all macro in macros
+	foreach ($macros as $key => $value) {
+		$macros[$key] = resolve_macro($value);
+	}
+
+	// get final compiler path
+	if ($compiler_path = get_setting(SETTING_COMPILER, SETTING_COMPILER_PATH, true, SETTING_OPTIONAL)) {
+		$fpc = $compiler_path;
+	} else {
+		if (strtolower(PHP_OS_FAMILY) == PLATFORM_DARWIN || strtolower(PHP_OS_FAMILY) == PLATFORM_LINUX) {
+			$fpc = "/usr/local/lib/fpc/$version/$arch";
+		} else {
+			fatal("no compiler search paths for this platform");
+		}
+	}
+
+	if (!file_exists($fpc)) {
+		fatal("can't find compiler at $fpc");
+	}
+
+	// TODO: make this an option with this being the default
+	$output = "$project/$target_name.$target_config.$arch";
+
+	// build final options string
+	$options = get_setting(SETTING_OPTIONS);
+
+	// add additional options from settings
+	if ($min_system_version = get_setting(SETTING_COMPILER, SETTING_COMPILER_MINIMUM_SYSTEM_VERSION, !SETTING_IS_PATH, SETTING_OPTIONAL)) {
+
+		if ($platform == PLATFORM_DARWIN) {
+			$options[] = "-WM$min_system_version";
+		} elseif ($platform == PLATFORM_IPHONE_SIMULATOR) {
+			// TODO: -WP is broken for iphonesim now
+			// $options[] = "-WP$min_system_version";
+		} elseif ($platform == PLATFORM_IPHONE) {
+			$options[] = "-WP$min_system_version";
+		} else {
+			fatal(SETTING_COMPILER_MINIMUM_SYSTEM_VERSION." is not supported for this target platform.");
+		}
+	}
+
+	// standard options
+	$options[] = "-FU\"$output\"";
+	$options[] = "-o\"$product_path\"";
+
+	// platform specific options
+	if ($platform == PLATFORM_IPHONE_SIMULATOR) {
+		$options[] = '-Tiphonesim';
+	} else {
+		// NOTE: -XR is broken for iphonesim now so we need to use -Ff
+		$options[] = "-XR\"$system_sdk\"";
+	}
+
+	$options = @implode(" ", $options);
+
+	// clean output directory
+	if ($clean_build && file_exists($output)) {
+		print("Cleaning output directory at '$output'...\n");
+		// TODO: this isn't portable! use mv -f "$output" ~/.Trash
+		exec("trash $output");
+	}
+
+	// make output directory
+	make_dir($output);
+
+	// build command
+	$command = "$fpc \"$program\" $options $source_paths $framework_paths $library_paths $include_paths";
+
+	// run command
+	push_makefile($command);
+	$exit_code = run_command($command);
+
+	if ($exit_code == 0) {
+		$path_info = pathinfo($program);
+
+		// verify the binary/executable location
+		$binary = $product_path;
+		if (!file_exists($binary)) {
+			fatal("compiled binary doesn't exist '$binary'");
+		}
+
+		// move .dSYM to output directory
+		$dsym = dirname($product_path).'/'.basename_no_ext($product_path).".dSYM";
+		if (file_exists($dsym)) {
+			$dest = $output."/".basename($dsym);
+			rmovedir($dsym, $dest);
+		}
+
+		// make the package if a bundle path was specificed
+		if ($bundle) $binary = make_bundle($platform, $binary, $bundle, $resource_paths);
+
+		if ($shared_makefile) {
+			$shared_makefile->push('clean', "rm -r $output");
+			if ($bundle)
+				$shared_makefile->push('clean', "rm -r $bundle");
+			$shared_makefile->push('install', "cp $bundle ~/Applications/".basename($bundle));
+			$shared_makefile->write_to_file("$project/Makefile");
+		}
+
+		// run xcodebuild for iphone platform
+		if ($platform == PLATFORM_IPHONE && $build_variant != BUILD_MODE_NO_RUN)
+			$xcode_product = run_xcode_project();
+
+		// run the executable
+		if ($run_after_build) {
+			// TODO: add env common setting to $binary string
+			switch ($build_variant) {
+				case BUILD_MODE_DEBUG:
+					prepare_debug_settings($project, array("r"));
+					$debug_commands = "$project/Settings/debug.txt";
+					if (file_exists($debug_commands)) {
+						run_in_terminal("/usr/bin/lldb --source \"$debug_commands\" $binary");
+					} else {
+						run_in_terminal("/usr/bin/lldb $binary");
+					}
+					break;
+
+			  case BUILD_MODE_VSCODE:
+			  	$command = "open -a \"Visual Studio Code\"";
+			  	// print("[$command]\n");
+			  	// passthru($command, $exit_code);
+			  	passthru2($command);
+			  	build_finished(0);
+			  	break;
+
+			  case BUILD_MODE_DEFAULT:
+			  	if ($platform == PLATFORM_DARWIN) {
+			  		run_in_terminal($binary);
+			  	} elseif ($platform == PLATFORM_IPHONE_SIMULATOR) {
+			  		if ($bundle) {
+			  			if (!file_exists($bundle)) fatal("iphone targets require an app bundle.");
+			  			$bundle_id = get_macro('CFBundleIdentifier', true, true, 'iphonesim target requires a bundle id to launch.');
+			  			run_in_simulator($bundle, $bundle_id);
+			  		} else {
+			  			$bundle_id = get_macro('CFBundleIdentifier', true, true, 'iphonesim target requires a bundle id to launch.');
+			  			// $xcode_product = get_macro('xcode_product');
+			  			$xcode_product = get_setting(SETTING_XCODEBUILD, SETTING_XCODEBUILD_PRODUCT, SETTING_IS_PATH, false);
+			  			
+			  			// if (!file_exists($xcode_product)) {
+			  			// 	$xcode_product = run_xcode_project();
+			  			// }
+			  			
+			  			// TODO: rebuild if the xcode bundle mode time changed
+			  			// where can save this temp info? maybe just in the temp dir
+			  			// print("***** xcode bundle mtime ".filemtime($xcode_product)."\n");
+
+			  			// inject fpc binary into xcode bundle
+			  			copy($binary, "$xcode_product/".basename($binary));
+
+			  			// launch depending on setting
+			  			// $launch = get_setting(SETTING_XCODEBUILD, 'launch');
+			  			// if ($launch == 'xcode') {
+				  		// 	$dir = dirname($argv[0]);
+				  		// 	$name = 'xcode_build.applescript';
+				  		// 	$path = "$dir/scripts/$name";
+				  		// 	if (!file_exists($path)) fatal("xcode build script can't be found ($path).");
+								// passthru2("osascript \"$path\"", $exit_code);
+			  			// } elseif ($launch == 'terminal') {
+			  			// 	run_in_simulator($xcode_product, $bundle_id);
+			  			// } else {
+			  			// 	fatal(SETTING_XCODEBUILD.' -> launch must be either "xcode" or "terminal"');
+			  			// }
+			  			launch_xcode_project(function() {
+			  				run_in_simulator($xcode_product, $bundle_id);
+			  			});
+
+			  		}
+			  	} elseif ($platform == PLATFORM_IPHONE) {
+			  		if ($xcode_product == null) fatal("target require 'xcode_product' macro.");
+			  		// TODO: use launch settings!
+			  		// if we run in xcode we don't need to use run_xcode_project first!
+		  			// run_in_terminal('ios-deploy --debug --bundle "'.$xcode_product.'"');
+		  			launch_xcode_project(function() {
+		  				run_in_terminal('ios-deploy --debug --bundle "'.$xcode_product.'"');
+		  			});
+			  	} else {
+			  		fatal('no default run mode for target platform');
+			  	}
+			  	break;
+
+				default:
+					break;
+			}
+		}
+		
+	} else {
+		print("failed with exit code $exit_code\n");
+		build_finished($exit_code);
+	}
+}
+
 function show_inputs() {
 	global $argv;
 	global $file;
@@ -1519,6 +1803,7 @@ switch ($build_variant) {
 	case BUILD_MODE_DEFAULT:
 	case BUILD_MODE_DEBUG:
 	case BUILD_MODE_VSCODE:
+	case BUILD_MODE_NO_RUN:
 		// try to use .fpcbuild in the project directory
 		if (file_exists($project_file)) {
 			

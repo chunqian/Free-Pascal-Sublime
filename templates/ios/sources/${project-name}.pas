@@ -1,0 +1,1 @@
+{$mode objfpc}{$modeswitch objectivec1}program ${project-name};uses  iPhoneAll,  AppDelegate;var  pool: NSAutoreleasePool;begin  pool := NSAutoreleasePool.alloc.init;  UIApplicationMain(argc, pchar(argv), nil, NSSTR('TAppDelegate'));  pool.release;end.

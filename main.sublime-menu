@@ -19,6 +19,22 @@
 // ]
 
 [
+  {  
+      "id": "tools",  
+      "children":  
+      [  
+        { "caption": "-" },
+        { 
+          "caption": "LSP - Restart Server", 
+          "command": "lsp_restart_client", 
+          "context": [{"key": "setting.lsp_active"}] 
+        },
+        { 
+          "caption": "LSP - Toggle Log Panel", 
+          "command": "lsp_toggle_server_panel",
+        }
+      ]  
+  },
   {
     "id": "preferences",
     "children":
@@ -39,6 +55,10 @@
                   "file": "${packages}/FPC/FPC.sublime-settings"
                 },
                 "caption": "Settings - Default"
+              },
+              {
+                "command": "doc_symbols",
+                "caption": "Document Symbols"
               }
             ]
           }

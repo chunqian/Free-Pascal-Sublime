@@ -4,27 +4,49 @@
 <dict>
 	<key>patterns</key>
 	<array>
+		<!-- gcc style (-vbr) errors -->
 		<dict>
 			<key>captures</key>
 			<dict>
 				<key>0</key>
 				<dict>
 					<key>name</key>
-					<string>string.warning.pascal</string>
+					<string>comment</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>comment.header</string>
 				</dict>
 			</dict>
 			<key>match</key>
-			<string>^(/.*):([0-9]+): (warning|error|note|fatal)+: ([0-9]+): (.*)$</string>
+			<string>^([\/]+.*):([0-9]+):([0-9]+): (?:error|fatal|warning|hint)+: (.*)$</string>
 			<key>name</key>
 			<string>meta.error.conosle.pascal</string>
 		</dict>
+		<!-- project stats -->
 		<dict>
 			<key>captures</key>
 			<dict>
 				<key>0</key>
 				<dict>
 					<key>name</key>
-					<string>storage.type.finish-message</string>
+					<string>comment</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>^\* (\w+) ('.*')$</string>
+			<key>name</key>
+			<string>meta.message.conosle.pascal</string>
+		</dict>
+		<!-- [messages] -->
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>keyword</string>
 				</dict>
 			</dict>
 			<key>match</key>

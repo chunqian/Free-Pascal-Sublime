@@ -1,0 +1,16 @@
+{
+
+  "scope": "meta.directive.mode.pascal",
+  "completions":
+  [
+    // https://freepascal.org/docs-html/prog/progsu105.html#x113-1140001.3.21
+    { "trigger": "fpc", "contents": "fpc", "kind": "keyword", "annotation": "mode"},
+    { "trigger": "objfpc", "contents": "objfpc", "kind": "keyword", "annotation": "mode"},
+    { "trigger": "delphi", "contents": "delphi", "kind": "keyword", "annotation": "mode"},
+    { "trigger": "delphiunicode", "contents": "delphiunicode", "kind": "keyword", "annotation": "mode"},
+    { "trigger": "tp", "contents": "tp", "kind": "keyword", "annotation": "mode"},
+    { "trigger": "macpas", "contents": "macpas", "kind": "keyword", "annotation": "mode"},
+    { "trigger": "iso", "contents": "iso", "kind": "keyword", "annotation": "mode"},
+    { "trigger": "extendedpascal", "contents": "extendedpascal", "kind": "keyword", "annotation": "mode"},
+  ]
+}

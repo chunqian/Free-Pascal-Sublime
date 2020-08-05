@@ -1,8 +1,0 @@
-<snippet>
-    <content><![CDATA[
-class operator Finalize(var rec: $0);
-]]></content>
-	<description>Finalize Operator</description>
-    <tabTrigger>fin</tabTrigger>
-    <scope>meta.scope.record.pascal,meta.scope.generic.pascal</scope> 
-</snippet>

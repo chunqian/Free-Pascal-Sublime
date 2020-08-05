@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+if ${1} then 
+	begin
+		$0
+	end;
+]]></content>
+	<description>if .. then</description>
+    <tabTrigger>if</tabTrigger>
+    <scope>meta.scope.code.pascal</scope> 
+</snippet>

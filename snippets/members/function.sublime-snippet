@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+function ${1:MyFunction}: ${2:boolean};
+]]></content>
+	<description>function</description>
+    <tabTrigger>func</tabTrigger>
+    <scope>meta.scope.struct.pascal</scope> 
+</snippet>

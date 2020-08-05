@@ -1,0 +1,91 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "fpcbuild": {
+            "configuration": "debug",
+            "target": "iphonesim",
+            "configurations": {
+                "debug": {
+                    "options": [
+                        "-godwarfcpp",
+                        "-gw",
+                        "-Sa"
+                    ]
+                },
+                "release": {
+                    "options": [
+                        "-Xs",
+                        "-O2"
+                    ]
+                }
+            },
+            "targets": {
+                "base": {
+                    "program": "$project/sources/${project-name}.pas",
+                    "product_name": "$product_name",
+                    "product_path": "$project/$product_name",
+                    "compiler": {
+                        "version": "3.3.1",
+                        "sdk": "$sdk_full"
+                    },
+                    "macros": {
+                        "product_name": "${project-name}",
+                        "company": "${company}"
+                    },
+                    "options": [
+                        "-vbr"
+                    ],
+                    "source_paths": [
+                        "$project",
+                        "~/Developer/ObjectivePascal/iOS_8_0"
+                    ],
+                    "framework_paths": [],
+                    "library_paths": [],
+                    "include_paths": []
+                },
+                "iphonesim": {
+                    "parent": "base",
+                    "platform": "$target",
+                    "compiler": {
+                        "architecture": "ppcrossx64",
+                        "minimum_system_version": "12.0"
+                    },
+                    "macros": {
+                        "CFBundleIdentifier": "com.$company.$product_name"
+                    },
+                    "xcodebuild": {
+                        "project": "$project/xcode/$product_name.xcodeproj",
+                        "scheme": "$product_name",
+                        "product": "$project/xcode/DerivedData/$product_name/Build/Products/Debug-iphonesimulator/$product_name.app"
+                    },
+                    "options": [
+                        "-dIPHONEALL"
+                    ],
+                    "framework_paths": [
+                        "$sdk_full/System/Library/Frameworks"
+                    ]
+                },
+                "iphone": {
+                    "parent": "base",
+                    "platform": "$target",
+                    "compiler": {
+                        "architecture": "ppcrossa64",
+                        "minimum_system_version": "12.0"
+                    },
+                    "xcodebuild": {
+                        "project": "$project/xcode/$product_name.xcodeproj",
+                        "scheme": "$product_name",
+                        "product": "$project/xcode/DerivedData/$product_name/Build/Products/Debug-iphoneos/$product_name.app"
+                    },
+                    "options": [
+                        "-dIPHONEALL"
+                    ]
+                }
+            }
+        }
+    }
+}

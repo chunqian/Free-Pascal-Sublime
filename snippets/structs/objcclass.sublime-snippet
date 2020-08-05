@@ -1,0 +1,10 @@
+<snippet>
+    <content><![CDATA[
+${1:ClassName} = objcclass${2:(${3:NSObject})}
+	$0
+end;
+]]></content>
+	<description>objcclass … end</description>
+    <tabTrigger>objcclass</tabTrigger>
+    <scope>source.pascal - meta.scope.code.pascal</scope> 
+</snippet>

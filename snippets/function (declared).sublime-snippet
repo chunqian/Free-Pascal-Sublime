@@ -1,8 +1,0 @@
-<snippet>
-    <content><![CDATA[
-function ${1:MyFunction}: ${2:boolean};
-]]></content>
-	<description>function (head)</description>
-    <tabTrigger>func</tabTrigger>
-    <scope>meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.generic.pascal,meta.scope.helper.pascal,meta.scope.interface.pascal</scope> 
-</snippet>

@@ -1,8 +1,0 @@
-<snippet>
-    <content><![CDATA[
-procedure ${1:MyProcedure};
-]]></content>
-	<description>procedure (head)</description>
-    <tabTrigger>proc</tabTrigger>
-    <scope>meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.generic.pascal,meta.scope.helper.pascal,meta.scope.interface.pascal</scope> 
-</snippet>

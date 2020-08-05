@@ -1,0 +1,10 @@
+<snippet>
+    <content><![CDATA[
+T${1:ClassName} = ${2:class} helper${3:(${4:TObject})} for ${5:TObject}
+	$0
+end;
+]]></content>
+	<description>helper</description>
+    <tabTrigger>hel</tabTrigger>
+    <scope>source.pascal - meta.scope.code.pascal</scope> 
+</snippet>

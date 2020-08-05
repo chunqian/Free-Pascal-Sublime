@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+procedure Set${1:Name}(newValue: ${2:type}); 
+begin
+	$0
+end;
+]]></content>
+	<description>setter</description>
+    <tabTrigger>set</tabTrigger>
+    <scope>(meta.scope.file.pascal | meta.scope.program.pascal | meta.scope.implementation.pascal) - meta.scope.struct.pascal</scope> 
+</snippet>

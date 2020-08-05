@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+destructor ${1:Destroy}; override;
+]]></content>
+	<description>destructor</description>
+    <tabTrigger>des</tabTrigger>
+    <scope>meta.scope.struct.pascal</scope> 
+</snippet>

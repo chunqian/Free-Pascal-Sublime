@@ -1,0 +1,47 @@
+{
+
+  "scope": "meta.directive.modeswitch.pascal",
+  "completions":
+  [
+    // https://wiki.freepascal.org/modeswitches
+    
+    { "trigger": "class", "contents": "class", "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "objpas", "contents": "objpas" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "result", "contents": "result" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "pchartostring", "contents": "pchartostring" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "cvar", "contents": "cvar" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "nestedcomments", "contents": "nestedcomments" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "classicprocvars", "contents": "classicprocvars" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "macprocvars", "contents": "macprocvars" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "repeatforward", "contents": "repeatforward" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "pointertoprocvar", "contents": "pointertoprocvar" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "autoderef", "contents": "autoderef" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "initfinal", "contents": "initfinal" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "ansistrings", "contents": "ansistrings" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "out", "contents": "out" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "defaultparameters", "contents": "defaultparameters" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "hintdirective", "contents": "hintdirective" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "duplicatelocals", "contents": "duplicatelocals" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "properties", "contents": "properties" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "allowinline", "contents": "allowinline" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "exceptions", "contents": "exceptions" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "objectivec1", "contents": "objectivec1" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "objectivec2", "contents": "objectivec2" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "nestedprocvars", "contents": "nestedprocvars" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "nonlocalgoto", "contents": "nonlocalgoto" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "advancedrecords", "contents": "advancedrecords" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "isounaryminus", "contents": "isounaryminus" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "systemcodepage", "contents": "systemcodepage" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "finalfields", "contents": "finalfields" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "unicodestrings", "contents": "unicodestrings" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "typehelpers", "contents": "typehelpers" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "cblocks", "contents": "cblocks" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "isoio", "contents": "isoio" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "isoprogramparas", "contents": "isoprogramparas" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "isomod", "contents": "isomod" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "arrayoperators", "contents": "arrayoperators" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "multihelpers", "contents": "multihelpers" , "kind": "keyword", "annotation": "mode switch", "details": "helpers can appear in multiple scopes simultaneously"},
+    { "trigger": "arraytodynarray", "contents": "arraytodynarray" , "kind": "keyword", "annotation": "mode switch"},
+    { "trigger": "prefixedattributes", "contents": "prefixedattributes", "kind": "keyword", "annotation": "mode switch" }
+  ]
+}

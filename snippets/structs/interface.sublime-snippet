@@ -1,0 +1,10 @@
+<snippet>
+    <content><![CDATA[
+I${1:InterfaceName} = interface${2:(${3:IObject})} ${4:['$3']}
+	$0
+end;
+]]></content>
+	<description>interface</description>
+    <tabTrigger>int</tabTrigger>
+    <scope>source.pascal - meta.scope.code.pascal</scope> 
+</snippet>

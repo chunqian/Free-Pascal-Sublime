@@ -8,19 +8,19 @@
         "fpcbuild": {
             "configuration": "debug",
             "target": "console",
-	    "makefile": false,
+	        "makefile": false,
             "configurations": {
                 "debug": {
                     "options": [
                         "-godwarfcpp",
-                        "-gw"
+                        "-gw",
+                        "-Sa"
                     ]
                 },
                 "release": {
                     "options": [
                         "-Xs",
-                        "-gw",
-			"-O2"
+			            "-O2"
                     ]
                 }
             },
@@ -53,7 +53,8 @@
                 "console": {
                     "parent": "base",
                     "options": []
-                }            }
+                }            
+            }
         }
     }
 }

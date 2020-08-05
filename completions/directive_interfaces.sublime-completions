@@ -1,0 +1,25 @@
+{
+  "scope": "meta.directive.interfaces.pascal",
+  "completions":
+  [
+    // https://freepascal.org/docs-html/prog/progsu37.html#x44-430001.2.37
+    { "trigger": "com", 
+      "contents": "com", 
+      "kind": "keyword", 
+      "annotation": "interfaces", 
+      "details": "Interfaces will descend from IUnknown and will be reference counted."
+    },
+    { "trigger": "corba", 
+      "contents": "corba",
+      "kind": "keyword", 
+      "annotation": "interfaces", 
+      "details": "Interfaces will not have a parent and are not reference counted (so the programmer is responsible for bookkeeping). Corba interfaces are identified by a simple string so they are assignment compatible with strings and not TGUID."
+    },
+    { "trigger": "default", 
+      "contents": "default", 
+      "kind": "keyword", 
+      "annotation": "interfaces", 
+      "details": "Currently, this is COM."
+    },
+  ]
+}

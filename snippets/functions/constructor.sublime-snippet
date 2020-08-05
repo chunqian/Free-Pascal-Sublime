@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+constructor ${1:TObject}.${2:Create}; 
+begin
+	$0
+end;
+]]></content>
+	<description>constructor</description>
+    <tabTrigger>con</tabTrigger>
+    <scope>(meta.scope.file.pascal | meta.scope.program.pascal | meta.scope.implementation.pascal) - meta.scope.struct.pascal</scope> 
+</snippet>

@@ -1,5 +1,5 @@
 {
-"scope": "meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.generic.pascal,meta.scope.helper.pascal",
+   "scope": "meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.generic.pascal,meta.scope.helper.pascal",
    "completions":
    [
       { "trigger": "pub", "contents": "public\n\t$0" },
