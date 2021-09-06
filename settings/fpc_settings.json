@@ -1,6 +1,0 @@
-{
-  "program": "$file",
-  "compiler": "/usr/local/lib/fpc/$fpc_latest/ppcx64",
-  "options": [
-  ]
-}
