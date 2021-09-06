@@ -1,0 +1,43 @@
+
+[variables]
+
+  PROJECT_NAME = "${project-name}"
+
+[settings]
+  
+  target = "bundle"
+  configuration = "debug"
+  unitPaths = ['./sources']
+  libraryPaths = []
+  compiler = "/usr/local/lib/fpc/${LATEST}/${ARCH}"
+  program = "./sources/${PROJECT_NAME}.pas"
+  output = './output'
+  executable = "./${PROJECT_NAME}"
+  options = ["-vbr"]
+
+[configuration.debug]
+
+  options = ["-gw", "-godwarfcpp", "-Sa"]
+
+[configuration.release]
+
+  options = ["-Xs", "-O2"]
+
+[platforms.darwin]
+  
+  options = ["-WP10.10"]
+
+[target.bundle]
+  
+  parent = "darwin"
+  product = "./${PROJECT_NAME}.app"
+  infoPlist = "${PRODUCT}/Contents/Info.plist"
+  options = ["-vbr"]
+  executable = "${PRODUCT}/Contents/MacOS/${PROJECT_NAME}"
+  
+  resources = [
+    {"./BaseUI/BaseUI/Base.lproj" = "${PRODUCT}/Contents/Resources"},
+  ]
+
+
+

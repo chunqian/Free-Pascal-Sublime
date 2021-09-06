@@ -2,8 +2,10 @@
    "scope": "meta.scope.program.pascal - meta.scope.code.pascal, meta.scope.unit.pascal - meta.scope.code.pascal",
    "completions":
    [
-      { "trigger": "var", "contents": "var\n\t$0" },
-      { "trigger": "type", "contents": "type\n\t$0" },
-      { "trigger": "const", "contents": "const\n\t$0" }
+      { "trigger": "var", "contents": "var\n\t$0", "kind": "keyword", "annotation": "⇢" },
+      { "trigger": "threadvar", "contents": "threadvar\n\t$0", "kind": "keyword", "annotation": "⇢" },
+      { "trigger": "type", "contents": "type\n\t$0", "kind": "keyword", "annotation": "⇢" },
+      { "trigger": "const", "contents": "const\n\t$0", "kind": "keyword", "annotation": "⇢" },
+      { "trigger": "label", "contents": "label\n\t$0", "kind": "keyword", "annotation": "⇢" },
    ]
 }

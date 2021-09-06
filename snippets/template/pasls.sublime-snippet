@@ -4,32 +4,14 @@
 -->
 <snippet>
 	<content><![CDATA[
-"pascal-language-server":
+"initializationOptions":
 {
-	"enabled": true,
-	"initializationOptions":
-	{
-		"fpcOptions":
-		[
-			"-Fu~/path/to/unit",
-		],
-		"options":
-		{
-			"includeWorkspaceFoldersAsUnitPaths": true,
-			"insertCompletionProcedureBrackets": true,
-			"workspaceSymbols": false,
-			"minimalisticCompletions": false,
-			"publishDiagnostics": false
-		},
-		"overloadPolicy": 3,
-		"maximumCompletions": 100,
-		"program": "Main.pas",
-		"symbolDatabase": "symbols.db",
-		"excludeUnits": ["system.pp"]
-	}
+	"fpcOptions": [],
+	"program": "Main.pas",
+	"symbolDatabase": "symbols.db"
 }
 ]]></content>
-	<description>pascal language server</description>
+	<description>pasls initialization options</description>
 	<tabTrigger>pasls</tabTrigger>
 	<scope>source.json.sublime.project</scope> 
 </snippet>

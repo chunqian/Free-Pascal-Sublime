@@ -1,0 +1,51 @@
+<snippet>
+  <content><![CDATA[
+TEnumerator = record
+  private
+    container: ${1:TContainer};
+    currentValue: ${2:T};
+    index: integer;
+  public
+    constructor Create(inContainer: ${1:TContainer}); 
+    function MoveNext: Boolean;
+    procedure Reset;
+    property CurrentIndex: integer read index;
+    property Current: ${2:T} read currentValue;
+end;
+
+function ${1:TContainer}.GetEnumerator: TEnumerator;
+begin
+  result := TEnumerator.Create(self);
+end;
+
+constructor ${1:TContainer}.TEnumerator.Create(inContainer: ${1:TContainer});
+begin
+  container := inContainer;
+end;
+  
+function ${1:TContainer}.TEnumerator.MoveNext: Boolean;
+var
+  count: integer;
+begin
+  count := container.Count;
+  if index = count then
+    exit(false);
+  while index < count do
+    begin
+      currentValue := container[index];
+      index += 1;
+      if currentValue <> Default(${2:T}) then
+        break;
+    end;
+  result := index <= count;
+end;
+  
+procedure ${1:TContainer}.TEnumerator.Reset;
+begin
+  index := 0;
+end;
+]]></content>
+  <description>enumerator</description>
+  <tabTrigger>enumerator</tabTrigger>
+  <scope>source.pascal</scope> 
+</snippet>

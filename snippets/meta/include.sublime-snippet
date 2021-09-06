@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+{\$include $0}
+]]></content>
+	<description>$include</description>
+    <tabTrigger>inc</tabTrigger>
+    <scope>source.pascal</scope> 
+</snippet>

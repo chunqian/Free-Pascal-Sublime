@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+operator ${1::=} (right: ${2:type}): ${4:result};
+begin
+    $0
+end;
+]]></content>
+	<description>unary operator</description>
+    <tabTrigger>op</tabTrigger>
+    <scope>(meta.scope.file.pascal | meta.scope.program.pascal | meta.scope.unit.implementation.pascal) - meta.scope.struct.pascal</scope> 
+</snippet>

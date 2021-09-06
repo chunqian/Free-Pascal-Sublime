@@ -1,0 +1,7 @@
+{
+  "scope": "meta.scope.program.pascal,meta.scope.unit.pascal,meta.scope.code.pascal",
+  "completions":
+  [
+    { "trigger": "begin", "contents": "begin\n\t$0\nend;", "kind": "keyword", "annotation": "begin..end" }
+  ]
+}

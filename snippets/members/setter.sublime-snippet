@@ -1,6 +1,6 @@
 <snippet>
     <content><![CDATA[
-procedure Set${1:Name}(newValue: ${2:type});
+procedure Set${1:Field}(newValue: ${2:Type});
 ]]></content>
 	<description>setter</description>
     <tabTrigger>set</tabTrigger>

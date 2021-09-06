@@ -6,6 +6,8 @@ import urllib.request
 import sys
 import xml.etree.ElementTree as ET
 
+# http://www.sublimetext.com/docs/api_reference.html
+
 # regex patterns
 pattern_func = re.compile("^\s*(procedure|function)+\s+(\w+)")
 pattern_meth_decl = re.compile("^\s*(class)*\s*(procedure|function|constructor|destructor)+\s+(\w+)")
@@ -50,33 +52,43 @@ def goto_line(view, text):
 class GotoFunctionImplementationCommand(sublime_plugin.TextCommand):
 		
 		def run(self, edit):
-				region = self.view.sel()[0].b
+				# region = self.view.sel()[0].b
 				line = line_at_sel(self.view)
 
-				if match_selector(self.view, line, "meta.scope.class.pascal"):
-						if self.goto_meth_impl(line, "meta.scope.class.pascal"):
-								return
-				elif match_selector(self.view, line, "meta.scope.record.pascal"):
-						if self.goto_meth_impl(line, "meta.scope.record.pascal"):
-								return
-				elif match_selector(self.view, line, "meta.scope.generic.pascal"):
-						if self.goto_meth_impl(line, "meta.scope.generic.pascal"):
-								return
-				elif match_selector(self.view, line, "meta.scope.helper.pascal"):
-						if self.goto_meth_impl(line, "meta.scope.helper.pascal"):
-								return
-				elif match_selector(self.view, line, "meta.method.implemented.pascal"):
-						if self.goto_meth_decl(line):
-								return
-				elif match_selector(self.view, line, "meta.function.declared.pascal"):
-						if self.goto_func_impl(line):
-								return
-				elif match_selector(self.view, line, "meta.function.implemented.pascal"):
-						if self.goto_func_decl(line):
-								return
+				# TODO: this is all broken since the new syntax definition
+				sel = self.view.sel()[0]
+				rowcol = self.view.rowcol(sel.begin())
+				text_point = self.view.text_point(rowcol[0], rowcol[1])
+				print(rowcol)
+				print(text_point)
+				score = self.view.score_selector(text_point, "meta.scope.struct entity.name.method")
+				print("  score: "+str(score))
+
+				if self.view.score_selector(text_point, "meta.scope.struct entity.name.method") > 0:
+					print("GOTO METH IMPL")
+					return
+
+					# if self.goto_meth_impl(line, "meta.scope.method.pascal"):
+					# 		return
+	
+				# if match_selector(self.view, line, "meta.scope.method.pascal"):
+				# 		if self.goto_meth_impl(line, "meta.scope.method.pascal"):
+				# 				return
+				# elif match_selector(self.view, line, "meta.scope.helper.pascal"):
+				# 		if self.goto_meth_impl(line, "meta.scope.helper.pascal"):
+				# 				return
+				# elif match_selector(self.view, line, "meta.method.implemented.pascal"):
+				# 		if self.goto_meth_decl(line):
+				# 				return
+				# elif match_selector(self.view, line, "meta.function.declared.pascal"):
+				# 		if self.goto_func_impl(line):
+				# 				return
+				# elif match_selector(self.view, line, "meta.function.implemented.pascal"):
+				# 		if self.goto_func_decl(line):
+				# 				return
 
 				# if we fall through to here use default command
-				print("wrong context, goto def instead")
+				print("no selector found, use 'goto_definition' instead")
 				self.view.window().run_command("goto_definition")
 				return
 
@@ -87,7 +99,7 @@ class GotoFunctionImplementationCommand(sublime_plugin.TextCommand):
 			content = line_str(self.view, cur_line)
 
 			res = pattern_method.match(content)
-			match = match_selector(self.view, cur_line, "meta.method.implemented.pascal")
+			match = match_selector(self.view, cur_line, "meta.scope.method.pascal")
 			if res and match:
 					name_class = res.groups()[2]
 					name_method = res.groups()[3]
@@ -253,15 +265,6 @@ class ImplementMethodCommand(GotoFunctionImplementationCommand):
 							return [cur_line, res.groups()]
 			return False
 
-		# def is_visible(self):
-		# 		return false
-		# def is_enabled(self):
-		# 		return false
-		# def is_checked(self):
-		# 		return false
-		# def description(self):
-		# 		return false
-
 
 class FindAllOccurencesCommand(sublime_plugin.TextCommand):
 	def on_done(self, index):
@@ -386,18 +389,3 @@ class LazDocCommand(sublime_plugin.TextCommand):
 
 			self.view.show_popup(html, max_width=800, on_navigate=lambda x: self.open_url(x))
 
-
-class DocSymbolsCommand(sublime_plugin.WindowCommand):
-
-	def run(self):
-		print("running DocSymbolsCommand...")
-		self.window.new_html_sheet('Sample Sheet', '<h1>HTML Sheet Test</h1><p>This is just a simple test</p><br/><a href="subl:doc_symbols">show again</a>', sublime.TRANSIENT)
-
-		# self.window.active_view().show_popup(
-  #         '<h1>HTML Sheet Test</h1><p>This is just a simple test</p>',
-  #         flags=sublime.COOPERATE_WITH_AUTO_COMPLETE,
-  #         location=-1,
-  #         max_width=1024)
-		# or get sheet from new_html_sheet()
-		# window.active_sheet().set_contents('Other')
-		# window.active_sheet().set_name('New Name')

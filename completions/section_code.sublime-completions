@@ -2,7 +2,6 @@
   "scope": "meta.scope.code.pascal",
   "completions":
   [
-    { "trigger": "begin", "contents": "begin\n\t$0\nend;", "kind": "keyword", "annotation": "begin..end" },
     { "trigger": "then", "contents": "then\n\t$0", "kind": "keyword", "annotation": "⇢" },
     { "trigger": "else", "contents": "else\n\t$0", "kind": "keyword", "annotation": "⇢" },
     { "trigger": "do", "contents": "do\n\t$0", "kind": "keyword", "annotation": "⇢" },

@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+function ${1:MyFunction}${2:($3)}: ${4:result}; message '$1$0';
+]]></content>
+	<description>objc-function</description>
+    <tabTrigger>func</tabTrigger>
+    <scope>meta.scope.objcclass | meta.scope.objccategory | meta.scope.objcprotocol</scope> 
+</snippet>

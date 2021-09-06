@@ -48,6 +48,7 @@ const SETTING_COMPILER_MINIMUM_SYSTEM_VERSION = "minimum_system_version";
 const SETTING_XCODEBUILD_PROJECT = "project";
 const SETTING_XCODEBUILD_SCHEME = "scheme";
 const SETTING_XCODEBUILD_PRODUCT = "product";
+const SETTING_XCODEBUILD_LAUNCH = "launch";
 
 const SETTING_IS_PATH = true;
 const SETTING_REQUIRED = true;
@@ -1063,15 +1064,6 @@ function find_sdk_path(): string {
 	global $target_platform;
 	$file = sys_get_temp_dir()."/${target_platform}_sdk_path.txt";
 	if (!file_exists($file)) {
-		// if ($target_platform == PLATFORM_DARWIN) {
-		// 	$sdk_path = exec('xcrun --sdk macosx --show-sdk-path');
-		// } elseif ($target_platform == PLATFORM_IPHONE_SIMULATOR) {
-		// 	$sdk_path = exec('xcrun --sdk iphonesimulator --show-sdk-path');
-		// } elseif ($target_platform == PLATFORM_IPHONE) {
-		// 	$sdk_path = exec('xcrun --sdk iphoneos --show-sdk-path');
-		// } else {
-		// 	fatal("can't find sdk for platform '$target_platform'");
-		// }
 		$sdk_path = exec('xcrun --sdk '.platform_sdk().' --show-sdk-path');
 		file_put_contents($file, $sdk_path);
 		return $sdk_path;
@@ -1094,34 +1086,6 @@ function find_fpc_version(bool $latest): string {
 		if (!$_ENV['FPC_STABLE_VERSION']) fatal("FPC_STABLE_VERSION must be set in shell profile.\n");
 		return $_ENV['FPC_STABLE_VERSION'];
 	}
-}
-
-function prepare_debug_settings($project, $extra_commands = "") {
-
-	// break points not found, bail!
-	if (!file_exists("$project/Settings/bp.json")) return;
-
-	// parse break points json to lldb command file
-	if ($str = file_get_contents("$project/Settings/bp.json")) {
-		$json = json_decode($str, true);
-		$break_points = array();
-		foreach ($json as $name => $lines) {
-			foreach ($lines as $line) {
-				$break_points[] = "b $name:$line";
-			}
-		}
-		//print_r($break_points);
-		$str = implode("\n", $break_points);
-		file_put_contents("$project/Settings/break_points.txt", $str);
-	}
-
-	// merge break points and commands into final debug commands (--source for lldb)
-	$break_points = file_get_contents("$project/Settings/break_points.txt");
-	$commands = file_get_contents("$project/Settings/commands.txt");
-	$commands .= "b fpc_raiseexception\n";
-	$final = $break_points."\n".$commands;
-	if ($extra_commands) $final = $final."\n".implode("\n", $extra_commands);
-	file_put_contents("$project/Settings/debug.txt", $final);
 }
 
 function load_fpc_build(string $path): ?array {
@@ -1265,7 +1229,11 @@ function run_xcode_project(): string {
  **/
 function launch_xcode_project($func): void {
 	global $argv;
-	$launch = get_setting(SETTING_XCODEBUILD, 'launch');
+	$launch = get_setting(SETTING_XCODEBUILD, SETTING_XCODEBUILD_LAUNCH, false, SETTING_OPTIONAL);
+	if (!$launch) {
+		$launch = 'xcode';
+		printc(ANSI_FORE_CYAN, "Xcode launch mode was not specifified ('xcode' or 'terminal'), '$launch' being used as default.\n");
+	}
 	$project = get_setting(SETTING_XCODEBUILD, SETTING_XCODEBUILD_PROJECT, SETTING_IS_PATH, true);
 	if ($launch == 'xcode') {
 		$dir = dirname($argv[0]);
@@ -1695,19 +1663,11 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 			// TODO: add env common setting to $binary string
 			switch ($build_variant) {
 				case BUILD_MODE_DEBUG:
-					prepare_debug_settings($project, array("r"));
-					$debug_commands = "$project/Settings/debug.txt";
-					if (file_exists($debug_commands)) {
-						run_in_terminal("/usr/bin/lldb --source \"$debug_commands\" $binary");
-					} else {
-						run_in_terminal("/usr/bin/lldb $binary");
-					}
+					run_in_terminal("/usr/bin/lldb $binary");
 					break;
 
 			  case BUILD_MODE_VSCODE:
 			  	$command = "open -a \"Visual Studio Code\"";
-			  	// print("[$command]\n");
-			  	// passthru($command, $exit_code);
 			  	passthru2($command);
 			  	build_finished(0);
 			  	break;
@@ -1736,19 +1696,6 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 			  			// inject fpc binary into xcode bundle
 			  			copy($binary, "$xcode_product/".basename($binary));
 
-			  			// launch depending on setting
-			  			// $launch = get_setting(SETTING_XCODEBUILD, 'launch');
-			  			// if ($launch == 'xcode') {
-				  		// 	$dir = dirname($argv[0]);
-				  		// 	$name = 'xcode_build.applescript';
-				  		// 	$path = "$dir/scripts/$name";
-				  		// 	if (!file_exists($path)) fatal("xcode build script can't be found ($path).");
-								// passthru2("osascript \"$path\"", $exit_code);
-			  			// } elseif ($launch == 'terminal') {
-			  			// 	run_in_simulator($xcode_product, $bundle_id);
-			  			// } else {
-			  			// 	fatal(SETTING_XCODEBUILD.' -> launch must be either "xcode" or "terminal"');
-			  			// }
 			  			launch_xcode_project(function() {
 			  				run_in_simulator($xcode_product, $bundle_id);
 			  			});
@@ -1756,9 +1703,6 @@ function run_project(string $file, string $project_file, ?array $fpcbuild, ?stri
 			  		}
 			  	} elseif ($platform == PLATFORM_IPHONE) {
 			  		if ($xcode_product == null) fatal("target require 'xcode_product' macro.");
-			  		// TODO: use launch settings!
-			  		// if we run in xcode we don't need to use run_xcode_project first!
-		  			// run_in_terminal('ios-deploy --debug --bundle "'.$xcode_product.'"');
 		  			launch_xcode_project(function() {
 		  				run_in_terminal('ios-deploy --debug --bundle "'.$xcode_product.'"');
 		  			});

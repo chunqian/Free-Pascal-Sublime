@@ -5,78 +5,21 @@
         }
     ],
     "settings": {
-        "fpcbuild": {
-            "configuration": "debug",
-            "target": "bundle",
-	        "makefile": false,
-            "configurations": {
-                "debug": {
-                    "options": [
-                        "-godwarfcpp",
-                        "-gw",
-                        "-Sa"
-                    ]
-                },
-                "release": {
-                    "options": [
-                        "-Xs",
-			            "-O2"
-                    ]
-                }
-            },
-            "targets": {
-                "base": {
-                    "program": "$project/sources/${project-name}.pas",
-                    "product_name": "$product_name",
-                    "product_path": "$project/$product_name",
-                    "compiler": {
-                        "version": "3.3.1",
-                        "architecture": "ppcx64",
-                        "minimum_system_version": "10.10",
-                        "sdk": "$sdk_path/MacOSX.sdk"
-                    },
-                    "macros": {
-                        "product_name": "${project-name}",
-                        "company": "my_company"
-                    },
-                    "options": [
-                        "-vbr"
-                    ],
-                    "source_paths": [
-                        "$project",
-                        "$project/sources"
-                    ],
-                    "framework_paths": [],
-                    "library_paths": [],
-                    "include_paths": []
-                },
-                "console": {
-                    "parent": "base",
-                    "options": []
-                },
-                "bundle": {
-                    "parent": "base",
-                    "bundle": "$project/$product_name.app",
-                    "info.plist": "$project/Info.plist",
-                    "codesign_entitlements": "$project/$product_name.entitlements",
-                    "codesign_identity": "Developer ID Application",
-                    "codesign_enabled": false,
-                    "options": [
-                        "-k\"-rpath @loader_path/../Frameworks\""
-                    ],
-                    "macros": {
-                        "CFBundleName": "$product_name",
-                        "CFBundleDisplayName": "$product_name",
-                        "CFBundleDevelopmentRegion": "English",
-                        "CFBundleIdentifier": "com.$company.$product_name",
-                        "CFBundleExecutable": "$product_name",
-                        "CFBundleIconFile": ""
-                    },
-                    "resource_paths": {
-                        "$project/BaseUI/BaseUI/Base.lproj": "$bundle/Contents/Resources"
-                    }
-                }
-            }
-        }
+		"LSP":
+		{
+			"pascal-language-server":
+			{
+				"enabled": true,
+				"initializationOptions":
+				{
+					"fpcOptions":
+					[
+          	"-Fu${project-home}/sources"
+					],
+					"program": "${project-name.pas",
+					"symbolDatabase": "symbols.db",
+				},
+			},
+		},
     }
 }

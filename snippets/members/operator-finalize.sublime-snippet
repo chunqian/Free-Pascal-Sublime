@@ -3,6 +3,6 @@
 class operator Finalize(var self: $0);
 ]]></content>
 	<description>finalize operator</description>
-    <tabTrigger>opfin</tabTrigger>
+    <tabTrigger>finalize</tabTrigger>
     <scope>meta.scope.record.pascal</scope> 
 </snippet>

@@ -1,0 +1,36 @@
+
+[variables]
+
+  PRODUCT_NAME = '${program-name}'
+  FPC_PROJECTS = '~/Developer/Projects/FPC'
+  GAMES = '~/Desktop/Projects/Games'
+
+[settings]
+
+  configuration = "debug"
+  unitPaths = ['${FPC_PROJECTS}/GLCanvas',
+               '${FPC_PROJECTS}/GLPT',
+               '${FPC_PROJECTS}/GLPT/threads',
+               '${GAMES}/BaseUnits',
+               '${GAMES}/GameUnits',
+               './sources'
+               ]
+  libraryPaths = []
+
+  compiler = "/usr/local/lib/fpc/${LATEST}/${ARCH}"
+  program = "./sources/${PRODUCT_NAME}.pas"
+  output = './output'
+  executable = "./${PRODUCT_NAME}"
+  options = ["-vbr"]
+
+[configuration.debug]
+
+  options = ["-gw", "-godwarfcpp", "-Sa"]
+
+[configuration.release]
+
+  options = ["-Xs", "-O2"]
+
+[platforms.darwin]
+  
+  options = ["-WP10.10"]

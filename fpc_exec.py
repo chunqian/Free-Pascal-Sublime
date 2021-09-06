@@ -46,6 +46,8 @@ def clear_warnings(window):
 def add_warning(view, file_name, line_num, message):
   global build_messages
   line_pos = view.text_point(line_num - 1, 0)
+  # todo: find first non-white character
+  
   line_region = view.line(line_pos)
   regions = view.get_regions("warning");
   view.add_regions("warning", regions + [line_region], "comment.warning", icon="dot", flags=sublime.DRAW_STIPPLED_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE)
@@ -114,14 +116,10 @@ class FpcExecCommand(defaultExec.ExecCommand):
   done_building_message = "Building Finished"
   notes_issued = ""
   show_panel = 0
+  show_warnings = sublime.load_settings("FPC.sublime-settings").get("show_warnings", False)
 
   def hide_annotations(self):
     super(FpcExecCommand, self).hide_annotations()
-    clear_warnings(self.window)
-
-  # NOTE: hide_phantoms is deprecated by hide_annotations in ST4
-  def hide_phantoms(self):
-    super(FpcExecCommand, self).hide_phantoms()
     clear_warnings(self.window)
 
   def on_finished(self, proc):
@@ -137,12 +135,12 @@ class FpcExecCommand(defaultExec.ExecCommand):
         build_messages[file_name] = items
 
     # DEBUGGING
-    for file_name in build_messages:
-      if build_messages[file_name] != None:
-        items = build_messages[file_name]
-        for i in range(0, len(items)):
-          print(file_name+" "+str(i)+" -> "+str(items[i]))
-          pass
+    # for file_name in build_messages:
+    #   if build_messages[file_name] != None:
+    #     items = build_messages[file_name]
+    #     for i in range(0, len(items)):
+    #       print(file_name+" "+str(i)+" -> "+str(items[i]))
+    #       pass
           
     # show next error
     errs = self.output_view.find_all_results()
@@ -157,27 +155,14 @@ class FpcExecCommand(defaultExec.ExecCommand):
 
   def on_data(self, proc, data):
     
-    # NOTE: this was required for an old version of ST3
-    # try:
-    #   characters = data.decode(self.encoding)
-    # except:
-    #   characters = "[Decode error - output not " + self.encoding + "]\n"
-    #   proc = None
-    characters = data
-
-    # log full line
-    characters = characters.replace('\r\n', '\n').replace('\r', '\n')
-    if int(sublime.version()) <= 3211:
-      self.append_string(proc, characters)
-    else:
-      self.write(characters)
+    data = data.replace('\r\n', '\n').replace('\r', '\n')
+    self.write(data)
     
     # https://forum.sublimetext.com/t/best-way-to-deal-with-highlighting-multi-line-function-definitions/47770/15
     # https://www.sublimetext.com/docs/3/api_reference.html#sublime.View
     
-    show_warnings = sublime.load_settings("FPC.sublime-settings").get("show_warnings", False)
-    if show_warnings:
-      lines = characters.strip().split('\n')
+    if self.show_warnings:
+      lines = data.strip().split('\n')
       for line in lines:
         res = pattern_warning.match(line);
         if res:
@@ -189,27 +174,27 @@ class FpcExecCommand(defaultExec.ExecCommand):
             add_warning(view, file_name, int(line_num), message)
 
     # error: Compilation aborted
-    res = pattern_error.match(characters);
+    res = pattern_error.match(data);
     if res:
       self.show_panel = True
       return
 
-    res = pattern_compiling.match(characters);
+    res = pattern_compiling.match(data);
     if res:
       sublime.status_message("Compiling "+res.groups()[1])
       return
 
-    res = pattern_linking.match(characters);
+    res = pattern_linking.match(data);
     if res:
       sublime.status_message("Linking...")
       return
 
-    res = pattern_finished.match(characters);
+    res = pattern_finished.match(data);
     if res:
-      self.done_building_message = "Building finished -- "+characters
+      self.done_building_message = "Building finished -- "+data
       return
 
-    res = pattern_notes.match(characters);
+    res = pattern_notes.match(data);
     if res:
       self.notes_issued = res.groups()[0]
       return

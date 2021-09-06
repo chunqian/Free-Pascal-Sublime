@@ -23,16 +23,33 @@
       "id": "tools",  
       "children":  
       [  
-        { "caption": "-" },
-        { 
-          "caption": "LSP - Restart Server", 
-          "command": "lsp_restart_client", 
-          "context": [{"key": "setting.lsp_active"}] 
-        },
-        { 
-          "caption": "LSP - Toggle Log Panel", 
-          "command": "lsp_toggle_server_panel",
+        // { "caption": "-" },
+        // { 
+        //   "caption": "LSP - Restart Server", 
+        //   "command": "lsp_restart_client", 
+        // },
+        // { 
+        //   "caption": "LSP - Toggle Log Panel", 
+        //   "command": "lsp_toggle_server_panel",
+        // },
+        // {
+        //   "caption": "LSP - Code Actions", 
+        //   "command": "lsp_code_actions", 
+        // },
+        {
+          "id": "lsp",  
+          "children":  
+          [  
+            {
+              "caption": "Code Actions", 
+              "command": "lsp_code_actions", 
+            }
+          ]
         }
+        // { 
+        //   "caption": "LSP - Show Diagnostics Panel", 
+        //   "command": "lsp_show_diagnostics_panel", 
+        // },
       ]  
   },
   {

@@ -1,6 +1,6 @@
 <snippet>
     <content><![CDATA[
-function Get${1:Name}: ${2:type};
+function Get${1:Field}: ${2:Type};
 ]]></content>
 	<description>getter</description>
     <tabTrigger>get</tabTrigger>

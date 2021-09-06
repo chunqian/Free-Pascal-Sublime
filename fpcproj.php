@@ -146,7 +146,7 @@
 		global $options;
 
 		$location = prompt('Location');
-		$location = str_replace('~', $_ENV['HOME'], $location);
+		$location = str_replace('~', getenv('HOME'), $location);
 		@mkdir($location, 0777, true);
 		if (file_exists($location))
 			$location = realpath($location);
@@ -183,7 +183,6 @@
 
 	$options = parse_cmd_options();
 	// print_r($options);
-	// print_r($argv);
 
 	// start interactive mode
 	if (count($argv) == 1) {
@@ -212,7 +211,7 @@
 		$dest = $argv[1];
 	}
 
-	$dest = str_replace('~', $_ENV['HOME'], $dest);
+	$dest = str_replace('~', getenv('HOME'), $dest);
 	// make directory just in case so realpath doesn't return null
 	@mkdir($dest);
 	$dest = realpath($dest);
@@ -252,6 +251,7 @@
 	$project_macros = array(
 		'${project-name}' => $project_name,
 		'${program-name}' => $program_name,
+		'${project-home}' => $dest,
 		'${vscode}' => '.vscode',
 		'${company}' => $company,
 		// NOTE: on 10.15 Xcode stopped shipping lldb-mi so we need to reference it here

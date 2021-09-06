@@ -25,9 +25,15 @@
     "background": "#1F2029",
     "selection": "#35404E",
     "caret": "white",
-    "line_highlight": "#EEF1F5",
+    "line_highlight": "hsla(100%, 100%, 100%, 0.2)"
   },
   "rules": [
+    {
+      "scope": "invalid",
+      "foreground": "#E1E2E7",
+      "background": "#D3232E",
+      "font_style": "italic"
+    },
     {
       "scope": "string",
       "foreground": "var(string)",
@@ -36,7 +42,11 @@
       "scope": "comment",
       "foreground": "var(comment)",
     },
-
+    {
+      "scope": "comment.line.sub",
+      "foreground": "#1E8F25",
+      "font_style": "italic",
+    },
     {
       "scope": "string.directive.pascal",
       "foreground": "var(macro)",
@@ -107,8 +117,22 @@
       "foreground": "var(keyword)",
     },
     {
+      // these should be keyword.operator.word but systax definitions do not obey the rules
+      "scope": "keyword.operator.new,keyword.operator.dispose,keyword.operator.and,keyword.operator.or,keyword.operator.not,keyword.operator.logical,keyword.operator.module,keyword.operator.type",
+      "foreground": "var(keyword)",
+    },
+    {
       "scope": "variable.function",
       "foreground": "var(text)",
     },
+    {
+      "scope": "variable.annotation",
+      "foreground": "var(string)",
+    },
+    {
+      // variable interpolation
+      "scope": "string && variable",
+      "font_style": "stippled_underline"
+    }
   ]
 }

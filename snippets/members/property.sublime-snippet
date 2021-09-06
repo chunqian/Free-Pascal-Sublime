@@ -1,8 +1,8 @@
 <snippet>
     <content><![CDATA[
-property ${1:PropertyName}${2:[${3:index}: ${4:integer}]}: ${5:WideString} read ${6:Get${1}} write ${7:Set${1}};$0
+property ${1:PropertyName}: ${5:WideString} read ${6:Get${1}} write ${7:Set${1}};$0
 ]]></content>
 	<description>property</description>
     <tabTrigger>prop</tabTrigger>
-    <scope>meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.object.pascal</scope> 
+    <scope>meta.scope.class.pascal,meta.scope.record.pascal,meta.scope.object.pascal,meta.scope.helper.pascal</scope> 
 </snippet>

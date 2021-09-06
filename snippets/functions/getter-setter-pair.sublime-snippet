@@ -1,0 +1,14 @@
+<snippet>
+    <content><![CDATA[
+function ${1:Class}.Get${2:Field}: ${3:Type};
+begin
+    $0
+end;
+procedure ${1:Class}.Set${2:Field}(newValue: ${3:Type}); 
+begin
+end;
+]]></content>
+	<description>getter-setter</description>
+    <tabTrigger>getset</tabTrigger>
+    <scope>(meta.scope.file.pascal | meta.scope.program.pascal | meta.scope.unit.implementation.pascal) - meta.scope.struct.pascal</scope> 
+</snippet>

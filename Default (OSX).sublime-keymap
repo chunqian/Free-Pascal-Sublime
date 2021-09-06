@@ -1,54 +1,6 @@
 [
 
 	// *************************************************************************************
-	// GOTO SYMBOL
-	// { "keys": ["alt+up"], "command": "goto_function_implementation" },
-	{ "keys": ["ctrl+d"], "command": "goto_function_implementation" },
-	{ "keys": ["ctrl+t"], "command": "goto_symbol_in_project"},
-	{ "keys": ["super+shift+t"], "command": "show_overlay", "args": {"overlay": "goto", "text": "@"} },
-
-	// *************************************************************************************
-	// LSP
-
-	// LSP - Main Menu Items
-	{ "keys": ["ctrl+super+b"], "command": "lsp_toggle_server_panel" },
-
-	// LSP - document symbols
-	{ "keys": ["super+shift+t"], "command": "lsp_document_symbols", "context": [
-		{ "key": "setting.lsp_active" },
-		{ "key": "selector", "operator": "equal", "operand": "source.pascal" }
-	]},
-
-	// LSP - workspace symbols
-	/*
-	{ "keys": ["ctrl+shift+t"], "command": "lsp_workspace_symbols", "context": [
-		{ "key": "setting.lsp_active" },
-		{ "key": "selector", "operator": "equal", "operand": "source.pascal" }],
-	  "args": {"symbol_query_input": "*"}
-	},
-	*/
-
-	// LSP - goto declaration
-	{ "keys": ["ctrl+d"], "command": "lsp_symbol_declaration", "context": [
-		{ "key": "setting.lsp_active" },
-		{ "key": "selector", "operator": "equal", "operand": "source.pascal" }
-	]},
-
-  // LSP - goto implementation
-	{ "keys": ["ctrl+d"], "command": "lsp_symbol_implementation", "context": [
-		{ "key": "setting.lsp_active" },
-		{ "key": "selector", "operator": "equal", "operand": "meta.scope.struct.pascal meta.scope.method.pascal" },
-	]},
-	{ "keys": ["ctrl+d"], "command": "lsp_symbol_implementation", "context": [
-		{ "key": "setting.lsp_active" },
-		{ "key": "selector", "operator": "equal", "operand": "meta.scope.struct.pascal meta.scope.method.pascal" },
-	]},
-	{ "keys": ["ctrl+d"], "command": "lsp_symbol_implementation", "context": [
-		{ "key": "setting.lsp_active" },
-		{ "key": "selector", "operator": "equal", "operand": "meta.scope.unit.interface.pascal meta.scope.function.pascal" },
-	]},
-
-	// *************************************************************************************
 	// ERRORS
 	{ "keys": ["ctrl+alt+down"], "command": "next_result" },
 

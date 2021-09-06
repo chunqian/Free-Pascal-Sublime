@@ -1,6 +1,6 @@
 <snippet>
     <content><![CDATA[
-class operator ${1:=} (left: ${2:record}; right: ${2:record}): ${4:result};$0
+class operator ${1:=} (left: ${2:self}; right: ${3:type}): ${2:result};$0
 ]]></content>
 	<description>binary operator</description>
     <tabTrigger>op</tabTrigger>

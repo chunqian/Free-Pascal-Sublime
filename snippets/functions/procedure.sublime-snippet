@@ -7,5 +7,5 @@ end;
 ]]></content>
 	<description>procedure</description>
     <tabTrigger>proc</tabTrigger>
-    <scope>(meta.scope.file.pascal | meta.scope.program.pascal | meta.scope.implementation.pascal) - meta.scope.struct.pascal</scope> 
+    <scope>(meta.scope.file.pascal | meta.scope.program.pascal | meta.scope.unit.implementation.pascal) - meta.scope.struct.pascal</scope> 
 </snippet>

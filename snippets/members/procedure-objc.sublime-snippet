@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+procedure ${1:MyProcedure}${2:($3)}; message '$1$0';
+]]></content>
+	<description>objc-procedure</description>
+    <tabTrigger>proc</tabTrigger>
+    <scope>meta.scope.objcclass | meta.scope.objccategory | meta.scope.objcprotocol</scope> 
+</snippet>

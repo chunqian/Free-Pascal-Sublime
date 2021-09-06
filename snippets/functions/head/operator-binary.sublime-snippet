@@ -1,0 +1,8 @@
+<snippet>
+    <content><![CDATA[
+operator ${1:=} (left: ${2:type}; right: ${2:type}): ${4:result};$0
+]]></content>
+	<description>binary operator</description>
+    <tabTrigger>op</tabTrigger>
+    <scope>(meta.scope.file.pascal | meta.scope.unit.interface.pascal) - meta.scope.struct.pascal</scope> 
+</snippet>

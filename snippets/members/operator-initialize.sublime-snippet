@@ -3,6 +3,6 @@
 class operator Initialize(var self: $0);
 ]]></content>
 	<description>initialize operator</description>
-    <tabTrigger>opint</tabTrigger>
+    <tabTrigger>initialize</tabTrigger>
     <scope>meta.scope.record.pascal</scope> 
 </snippet>
