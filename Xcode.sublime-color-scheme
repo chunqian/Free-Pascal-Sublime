@@ -133,6 +133,12 @@
       // variable interpolation
       "scope": "string && variable",
       "font_style": "stippled_underline"
-    }
+    },
+    // ******** C++ Extensions ********
+    {
+      "scope": "meta.toc-list.full-identifier.c++",
+      "foreground": "var(symbol)",
+    },
+
   ]
 }

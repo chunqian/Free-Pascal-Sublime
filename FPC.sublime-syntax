@@ -192,7 +192,7 @@ contexts:
       push:
         - meta_scope: meta.directive.interfaces.pascal
         - include: compiler_directive_value
-    - match: (?<={)\$(?i:(if|ifc))\s+
+    - match: (?<={)\$(?i:(if|ifc|elseif))\s+
       scope: keyword.other.directive.pascal
       push:
         - include: compiler_directive_expression
