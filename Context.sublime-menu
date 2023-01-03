@@ -1,5 +1,0 @@
-[
-	{ "caption": "-"},
-	// { "caption": "Find All Occurences...", "command": "find_all_occurences" },
-  { "caption": "Search FPC Documentation...", "command": "laz_doc" },
-]

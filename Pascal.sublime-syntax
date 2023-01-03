@@ -17,9 +17,9 @@
 # free pascal language reference:
 # https://freepascal.org/docs-html/ref/ref.html
 
-name: Free Pascal Compiler
+name: Pascal
 author: Ryan Joseph
-file_extensions: [pas,pp,p,inc,lpr]
+file_extensions: [pas,pp,p,inc,lpr,dpr,dfm,dpk]
 scope: source.pascal
 
 variables:
