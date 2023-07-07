@@ -128,7 +128,7 @@ contexts:
       scope: punctuation.comment.pascal
       push: 
         - include: compiler_directive
-        - include: comment_todo
+        # - include: comment_todo
         # - include: comment_url
         - meta_scope: comment.block.pascal
         - match: \}
@@ -137,7 +137,7 @@ contexts:
     - match: ///
       scope: punctuation.comment.pascal
       push:
-        - include: comment_todo
+        # - include: comment_todo
         # - include: comment_url
         - meta_scope: comment.line.sub.pascal
         - match: $
@@ -145,7 +145,7 @@ contexts:
     - match: //
       scope: punctuation.comment.pascal
       push: 
-        - include: comment_todo
+        # - include: comment_todo
         # - include: comment_url
         - meta_scope: comment.line.pascal
         - match: $
