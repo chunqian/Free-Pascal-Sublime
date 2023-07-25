@@ -1,14 +1,19 @@
 <snippet>
     <content><![CDATA[
-{\$mode objfpc}
+
+// Copyright (C) 2023 CHUNQIAN SHEN. All rights reserved.
 
 program ${1:unit_name};
+
+{\$Mode objfpc}
+{\$H+}
 
 begin
 $0
 end.
+
 ]]></content>
 	<description>program .. end.</description>
-    <tabTrigger>prog</tabTrigger>
+    <tabTrigger>program</tabTrigger>
     <scope>source.pascal</scope> 
 </snippet>

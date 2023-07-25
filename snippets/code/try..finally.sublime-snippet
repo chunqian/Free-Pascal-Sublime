@@ -1,11 +1,11 @@
 <snippet>
     <content><![CDATA[
 try
-  $0
+	$0
 finally
 end;
 ]]></content>
-  <description>try .. finally</description>
+	<description>try .. finally</description>
     <tabTrigger>try</tabTrigger>
     <scope>meta.scope.code.pascal</scope> 
 </snippet>

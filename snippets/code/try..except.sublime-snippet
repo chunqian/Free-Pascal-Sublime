@@ -1,13 +1,13 @@
 <snippet>
     <content><![CDATA[
 try
-  $0
+	$0
 except
-  on E: Exception do
-    writeln('Error: ', E.ClassName, ' ', E.Message);
+	on E: Exception do
+		writeln('Error: ', E.ClassName, ' ', E.Message);
 end;
 ]]></content>
-  <description>try .. except</description>
+	<description>try .. except</description>
     <tabTrigger>try</tabTrigger>
     <scope>meta.scope.code.pascal</scope> 
 </snippet>

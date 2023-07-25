@@ -1,9 +1,9 @@
 <snippet>
     <content><![CDATA[
 if ${1} then 
-	begin
-		$0
-	end;
+begin
+	$0
+end;
 ]]></content>
 	<description>if .. then</description>
     <tabTrigger>if</tabTrigger>
