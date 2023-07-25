@@ -1,6 +1,6 @@
 <snippet>
     <content><![CDATA[
-while ${1} do 
+while ${1} do
 begin
 	$0
 end;

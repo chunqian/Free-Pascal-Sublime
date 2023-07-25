@@ -1,6 +1,6 @@
 <snippet>
     <content><![CDATA[
-if ${1} then 
+if ${1} then
 begin
 	$0
 end;
